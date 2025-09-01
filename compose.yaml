@@ -1,0 +1,44 @@
+services:
+  db:
+    image: "mariadb:latest"
+    environment:
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: wordpress
+      MARIADB_PASSWORD_FILE: /run/secrets/db_password
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    secrets:
+      - db_password
+      - db_root_password
+
+  web:
+    image: "horsecatdog/wordpress_apache_dev:latest"
+    depends_on:
+      - db
+    environment:
+      WORDPRESS_DB_HOST: "db:3306"
+      WORDPRESS_DB: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password
+      WORDPRESS_ROOT: "/srv/www/wordpress"
+
+    ports:
+      - "80:80"
+    volumes:
+      - themes:/srv/www/wordpress/wp-content/themes
+    secrets:
+      - db_password
+      - site_admin_password
+
+volumes:
+  mariadb_data:
+  themes:
+
+secrets:
+   db_password:
+     file: .secret_db_password
+   db_root_password:
+     file: .secret_db_root_password
+   site_admin_password:
+     file: .secret_site_admin_password
