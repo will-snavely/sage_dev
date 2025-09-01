@@ -21,8 +21,6 @@ services:
       WORDPRESS_DB: wordpress
       WORDPRESS_DB_USER: wordpress
       WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password
-      WORDPRESS_ROOT: "/srv/www/wordpress"
-
     ports:
       - "80:80"
     volumes:
