@@ -24,14 +24,13 @@ services:
     ports:
       - "80:80"
     volumes:
-      - themes:/srv/www/wordpress/wp-content/themes
+      - ./themes:/srv/www/wordpress/wp-content/themes
     secrets:
       - db_password
       - site_admin_password
 
 volumes:
   mariadb_data:
-  themes:
 
 secrets:
    db_password:
