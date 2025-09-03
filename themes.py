@@ -35,8 +35,8 @@ def activate_theme(args):
 
 def build_sage_theme(args):
     theme_dir = f"/srv/www/wordpress/wp-content/themes/{args.name}"
-    run_docker_cmd("npm install", workdir=theme_dir, user="root")
-    run_docker_cmd("npm run build", workdir=theme_dir, user="root")
+    run_docker_cmd("npm install", workdir=theme_dir)
+    run_docker_cmd("npm run build", workdir=theme_dir)
 
 def create_sage_theme(args):
     name = args.name
