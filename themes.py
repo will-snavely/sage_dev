@@ -7,7 +7,9 @@ import json
 import logging
 import shlex
 
-WORDPRESS_ROOT = "/srv/www/wordpress/"
+WORDPRESS_ROOT = "/srv/www/wordpress"
+THEMES_ROOT = f"{WORDPRESS_ROOT}/wp-content/themes"
+
 logger = logging.getLogger(__name__)
 
 def docker_cmd(cmd, service, user, workdir):
@@ -34,13 +36,15 @@ def activate_theme(args):
     run_docker_cmd(f"wp theme activate {args.name}")
 
 def build_sage_theme(args):
-    theme_dir = f"/srv/www/wordpress/wp-content/themes/{args.name}"
-    run_docker_cmd("npm install", workdir=theme_dir)
-    run_docker_cmd("npm run build", workdir=theme_dir)
+    run_docker_cmd("composer update", workdir=f"{THEMES_ROOT}/{args.name}")
+    run_docker_cmd("npm install", workdir=f"{THEMES_ROOT}/{args.name}")
+    run_docker_cmd("npm run build", workdir=f"{THEMES_ROOT}/{args.name}")
+    run_docker_cmd(f"chown -R www-data:www-data {args.name}", 
+                   user="root", workdir=THEMES_ROOT)
 
 def create_sage_theme(args):
     name = args.name
-    themes_dir = "/srv/www/wordpress/wp-content/themes"
+    themes_dir = f"{WORDPRESS_ROOT}/wp-content/themes"
     run_docker_cmd(f"composer create-project roots/sage {name}", 
                    user="root", workdir=themes_dir)
     run_docker_cmd(f"chown -R www-data:www-data {name}", 
@@ -51,6 +55,11 @@ def create_sage_theme(args):
     search = r"\/app\/themes\/sage\/public\/build\/"
     replace = r"\/wp-content\/themes\/" + name + r"\/public\/build\/"
     run_docker_cmd(f"sed -i 's/{search}/{replace}/g' {name}/vite.config.js", workdir=themes_dir)
+
+def exec_command(args):
+    if args.workdir:
+        workdir = args.workdir
+    run_docker_cmd(args.command, workdir=workdir)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -71,6 +80,11 @@ if __name__ == "__main__":
 
     parser_list = subparsers.add_parser("activate", help="Activate a theme on the container.")
     parser_list.set_defaults(func=activate_theme)
+
+    parser_exec = subparsers.add_parser("exec", help="Execute a command on the container")
+    parser_exec.add_argument("--workdir", "-w", default=WORDPRESS_ROOT, type=str, help="Working directory.")
+    parser_exec.add_argument("command", nargs=argparse.REMAINDER)
+    parser_exec.set_defaults(func=exec_command)
 
     args = parser.parse_args()
     log_level = logging.DEBUG if args.verbose else logging.INFO
