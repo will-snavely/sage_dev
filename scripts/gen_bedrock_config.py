@@ -41,7 +41,5 @@ if __name__ == "__main__":
     if not os.path.exists(bedrock_env_file):
         with open(bedrock_env_file, "w") as f:
             config = get_bedrock_config()
-            print(config)
             for k,v in config.items():
-                print(k,v)
                 f.write(f"{k}=\"{v}\"\n")
