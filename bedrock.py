@@ -9,22 +9,17 @@ from docker_util import *
 
 logger = logging.getLogger(__name__)
 
-PROJECTS_ROOT = "/app/projects"
-BEDROCK_CONFIG = ".bedrock.conf"
-
 def create_bedrock_project(args):
     name = args.name
     run_docker_cmd(f"bash /app/scripts/create_dev_group.sh", service="dev")
     run_docker_cmd(f"composer create-project roots/bedrock {name}", 
-        service="dev", workdir=PROJECTS_ROOT)
+        service="dev", workdir="/app/projects")
     run_docker_cmd(f"chgrp -R developers /app/projects", service="dev")
     run_docker_cmd(f"chmod -R g+rw /app/projects", service="dev")
-    with open(BEDROCK_CONFIG, "w") as f: 
-        config = {
-            "active_project": name, 
-            "active_theme":""
-        }
-        json.dump(config, f, indent=4)
+    save_bedrock_conf({
+            "working_project": name, 
+            "working_theme":""
+        })
 
 def deploy_bedrock_project(args):
     name = args.name
@@ -41,13 +36,8 @@ def deploy_bedrock_project(args):
     else:
         raise FileNotFoundError(f"Project {name} not found.")
 
-def load_bedrock_config():
-    with open(BEDROCK_CONFIG) as f:
-        return json.load(f)
-
 if __name__ == "__main__":
     config = load_bedrock_config()
-    print(config)
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-v", "--verbose", action="store_true")
@@ -59,7 +49,7 @@ if __name__ == "__main__":
     parser_deploy = subparsers.add_parser("deploy", help="Deploy a project to the web server")
     parser_deploy.add_argument(
         "--name", "-n", 
-        default=config.get("active_project"), 
+        default=config.get("working_project"), 
         type=str, 
         help="The name of the project.")
     parser_deploy.set_defaults(func=deploy_bedrock_project)
@@ -67,4 +57,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     log_level = logging.DEBUG if args.verbose else logging.INFO
     logging.basicConfig(level=log_level)
+    logger.debug(f"Configuration: {config}")
     args.func(args)

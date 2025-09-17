@@ -1,8 +1,21 @@
 import logging
 import shlex
 import subprocess
+import json
 
 logger = logging.getLogger(__name__)
+BEDROCK_CONF = ".bedrock.conf"
+
+def load_bedrock_config(src=BEDROCK_CONF):
+    try:
+        with open(src) as f:
+            return json.load(f)
+    except:
+        return {}
+
+def save_bedrock_config(config, dest=BEDROCK_CONF):
+    with open(dest, "w") as f:
+        json.dump(config, f, indent=4)
 
 def docker_cmd(cmd, service, user, workdir):
     result = ["docker-compose", "exec"]
