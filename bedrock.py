@@ -29,6 +29,9 @@ def deploy_bedrock_project(args):
         run_docker_cmd(f"python3 /app/scripts/gen_bedrock_config.py {name}", service="web")
         run_docker_cmd(f"python3 /app/scripts/gen_apache_config.py {name}", service="web")
         run_docker_cmd("chown -R www-data:www-data /www/srv/bedrock", service="web")
+        run_docker_cmd("composer update", workdir=f"/www/srv/bedrock/{name}", user="www-data", service="web")
+        run_docker_cmd("composer install --no-dev  --optimize-autoloader", 
+                        workdir=f"/www/srv/bedrock/{name}", user="www-data", service="web")
         run_docker_cmd("a2ensite wordpress", service="web")
         run_docker_cmd("a2enmod rewrite", service="web")
         run_docker_cmd("a2dissite 000-default", service="web")
