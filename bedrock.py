@@ -9,29 +9,47 @@ from docker_util import *
 
 logger = logging.getLogger(__name__)
 
+
 def create_bedrock_project(args):
     name = args.name
     run_docker_cmd(f"bash /app/scripts/create_dev_group.sh", service="dev")
-    run_docker_cmd(f"composer create-project roots/bedrock {name}", 
-        service="dev", workdir="/app/projects")
+    run_docker_cmd(
+        f"composer create-project roots/bedrock {name}",
+        service="dev",
+        workdir="/app/projects",
+    )
     run_docker_cmd(f"chgrp -R developers /app/projects", service="dev")
     run_docker_cmd(f"chmod -R g+rw /app/projects", service="dev")
-    save_bedrock_conf({
-            "working_project": name, 
-            "working_theme":""
-        })
+    save_bedrock_config({"working_project": name, "working_theme": ""})
+
 
 def deploy_bedrock_project(args):
     name = args.name
     if os.path.exists(f"./projects/{name}"):
         run_docker_cmd(f"mkdir -p /www/srv/bedrock", service="web")
-        run_docker_cmd(f"rsync -a --exclude node_modules /app/projects/{name} /www/srv/bedrock/", service="web")
-        run_docker_cmd(f"python3 /app/scripts/gen_bedrock_config.py {name}", service="web")
-        run_docker_cmd(f"python3 /app/scripts/gen_apache_config.py {name}", service="web")
+        run_docker_cmd(
+            f"rsync -a --exclude node_modules /app/projects/{name} /www/srv/bedrock/",
+            service="web",
+        )
+        run_docker_cmd(
+            f"python3 /app/scripts/gen_bedrock_config.py {name}", service="web"
+        )
+        run_docker_cmd(
+            f"python3 /app/scripts/gen_apache_config.py {name}", service="web"
+        )
         run_docker_cmd("chown -R www-data:www-data /www/srv/bedrock", service="web")
-        run_docker_cmd("composer update", workdir=f"/www/srv/bedrock/{name}", user="www-data", service="web")
-        run_docker_cmd("composer install --no-dev  --optimize-autoloader", 
-                        workdir=f"/www/srv/bedrock/{name}", user="www-data", service="web")
+        run_docker_cmd(
+            "composer update",
+            workdir=f"/www/srv/bedrock/{name}",
+            user="www-data",
+            service="web",
+        )
+        run_docker_cmd(
+            "composer install --no-dev  --optimize-autoloader",
+            workdir=f"/www/srv/bedrock/{name}",
+            user="www-data",
+            service="web",
+        )
         run_docker_cmd("a2ensite wordpress", service="web")
         run_docker_cmd("a2enmod rewrite", service="web")
         run_docker_cmd("a2dissite 000-default", service="web")
@@ -39,22 +57,29 @@ def deploy_bedrock_project(args):
     else:
         raise FileNotFoundError(f"Project {name} not found.")
 
+
 if __name__ == "__main__":
     config = load_bedrock_config()
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-v", "--verbose", action="store_true")
-    subparsers = parser.add_subparsers(title="Commands", help='Subcommand help.', required=True)
+    subparsers = parser.add_subparsers(
+        title="Commands", help="Subcommand help.", required=True
+    )
     parser_init = subparsers.add_parser("init", help="Create a new bedrock project")
     parser_init.add_argument("name", help="The name of the project.")
     parser_init.set_defaults(func=create_bedrock_project)
 
-    parser_deploy = subparsers.add_parser("deploy", help="Deploy a project to the web server")
+    parser_deploy = subparsers.add_parser(
+        "deploy", help="Deploy a project to the web server"
+    )
     parser_deploy.add_argument(
-        "--name", "-n", 
-        default=config.get("working_project"), 
-        type=str, 
-        help="The name of the project.")
+        "--name",
+        "-n",
+        default=config.get("working_project"),
+        type=str,
+        help="The name of the project.",
+    )
     parser_deploy.set_defaults(func=deploy_bedrock_project)
 
     args = parser.parse_args()

@@ -4,15 +4,16 @@ import collections
 import argparse
 
 auth_keys = [
-    'AUTH_KEY',
-    'SECURE_AUTH_KEY',
-    'LOGGED_IN_KEY',
-    'NONCE_KEY',
-    'AUTH_SALT',
-    'SECURE_AUTH_SALT',
-    'LOGGED_IN_SALT',
-    'NONCE_SALT'
-] 
+    "AUTH_KEY",
+    "SECURE_AUTH_KEY",
+    "LOGGED_IN_KEY",
+    "NONCE_KEY",
+    "AUTH_SALT",
+    "SECURE_AUTH_SALT",
+    "LOGGED_IN_SALT",
+    "NONCE_SALT",
+]
+
 
 def get_bedrock_config():
     config = collections.OrderedDict()
@@ -32,6 +33,7 @@ def get_bedrock_config():
 
     return config
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("name", type=str, help="The bedrock project name.")
@@ -41,5 +43,5 @@ if __name__ == "__main__":
     if not os.path.exists(bedrock_env_file):
         with open(bedrock_env_file, "w") as f:
             config = get_bedrock_config()
-            for k,v in config.items():
-                f.write(f"{k}=\"{v}\"\n")
+            for k, v in config.items():
+                f.write(f'{k}="{v}"\n')

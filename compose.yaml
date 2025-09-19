@@ -45,7 +45,7 @@ volumes:
   mariadb_data:
 
 secrets:
-   db_password:
-     file: .secret_db_password
-   db_root_password:
-     file: .secret_db_root_password
+  db_password:
+    file: .secret_db_password
+  db_root_password:
+    file: .secret_db_root_password
