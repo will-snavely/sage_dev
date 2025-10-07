@@ -23,6 +23,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("name", type=str, help="The bedrock project name.")
     args = parser.parse_args()
-    web_root = f"/www/srv/bedrock/{args.name}/web/"
+    bedrock_root = os.environ["BEDROCK_ROOT"]
+    web_root = f"{bedrock_root}/{args.name}/web/"
     with open("/etc/apache2/sites-available/wordpress.conf", "w") as f:
         f.write(apache_config.format(wp_root=web_root))

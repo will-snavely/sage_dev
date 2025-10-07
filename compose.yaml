@@ -1,13 +1,25 @@
 services:
   dev:
     image: "horsecatdog/bedrock:latest"
-    tty: true
+    depends_on:
+      - db
     environment:
       DEV_GROUP_ID: ${DEV_GROUP_ID}
-      BEDROCK_ROOT: /app/projects
+      DEV_USER_ID: ${DEV_USER_ID}
+      BEDROCK_ROOT: "/www/srv/projects"
+      WORDPRESS_DB_HOST: "db:3306"
+      WORDPRESS_DB: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password
+      WORDPRESS_DB_NAME: wordpress
+      SITE_URL: ${SITE_URL}
+    ports:
+      - "${LOCAL_PORT}:80"
     volumes:
-      - ./projects:/app/projects
+      - ./projects:/www/srv/projects
       - ./scripts:/app/scripts
+    secrets:
+      - db_password
 
   db:
     image: "mariadb:latest"
@@ -21,25 +33,6 @@ services:
     secrets:
       - db_password
       - db_root_password
-
-  web:
-    image: "horsecatdog/web_apache_php:latest"
-    depends_on:
-      - db
-    environment:
-      WORDPRESS_DB_HOST: "db:3306"
-      WORDPRESS_DB: wordpress
-      WORDPRESS_DB_USER: wordpress
-      WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password
-      WORDPRESS_DB_NAME: wordpress
-      SITE_URL: ${SITE_URL}
-    ports:
-      - "${LOCAL_PORT}:80"
-    volumes:
-      - ./projects:/app/projects
-      - ./scripts:/app/scripts
-    secrets:
-      - db_password
 
 volumes:
   mariadb_data:

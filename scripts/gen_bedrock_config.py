@@ -15,7 +15,7 @@ auth_keys = [
 ]
 
 
-def get_bedrock_config():
+def get_bedrock_config(project_dir):
     config = collections.OrderedDict()
     config["DB_NAME"] = os.environ["WORDPRESS_DB"]
     config["DB_USER"] = os.environ["WORDPRESS_DB_USER"]
@@ -26,7 +26,7 @@ def get_bedrock_config():
     config["WP_ENV"] = "development"
     config["WP_HOME"] = os.environ["SITE_URL"]
     config["WP_SITEURL"] = "${WP_HOME}/wp"
-    config["WP_DEBUG_LOG"] = "/www/srv/bedrock/debug.log"
+    config["WP_DEBUG_LOG"] = f"{project_dir}/debug.log"
 
     for key in auth_keys:
         config[key] = secrets.token_urlsafe(64)
@@ -39,9 +39,10 @@ if __name__ == "__main__":
     parser.add_argument("name", type=str, help="The bedrock project name.")
     args = parser.parse_args()
 
-    bedrock_env_file = f"/www/srv/bedrock/{args.name}/.env"
+    bedrock_root = os.environ["BEDROCK_ROOT"]
+    bedrock_env_file = f"{bedrock_root}/{args.name}/.env"
     if not os.path.exists(bedrock_env_file):
         with open(bedrock_env_file, "w") as f:
-            config = get_bedrock_config()
+            config = get_bedrock_config(f"{bedrock_root}/{args.name}")
             for k, v in config.items():
                 f.write(f'{k}="{v}"\n')

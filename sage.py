@@ -9,41 +9,40 @@ logger = logging.getLogger(__name__)
 def create_sage_theme(args):
     project = args.project
     theme = args.theme
-    themes_dir = f"/app/projects/{project}/web/app/themes"
-    run_docker_cmd(
+    themes_dir = f"{BEDROCK_ROOT}/{project}/web/app/themes"
+    run_docker_cmds (
         f"composer create-project roots/sage {theme}",
-        user="root",
+        "bash /app/scripts/update_dev_user.sh", 
+        f"chgrp -R devs {BEDROCK_ROOT}",
+        f"chown -R www-data {BEDROCK_ROOT}",
+        f"chmod -R g+rw {BEDROCK_ROOT}",
         workdir=themes_dir,
-        service="dev",
     )
-    run_docker_cmd(f"chgrp -R developers /app/projects", service="dev")
-    run_docker_cmd(f"chmod -R g+rw /app/projects", service="dev")
 
     new_theme_dir = f"{themes_dir}/{theme}"
     search = r"\/app\/themes\/sage\/public\/build\/"
     replace = r"\/app\/themes\/" + theme + "\/public\/build\/"
     run_docker_cmd(
         f"sed -i 's/{search}/{replace}/g' vite.config.js",
-        service="dev",
-        workdir=new_theme_dir,
+        workdir=new_theme_dir
     )
+
     save_bedrock_config({"working_project": project, "working_theme": theme})
 
 
 def build_sage_theme(args):
     project = args.project
     theme = args.theme
-    theme_dir = f"/app/projects/{project}/web/app/themes/{theme}"
-    run_docker_cmd("npm install", workdir=theme_dir, service="dev")
-    run_docker_cmd("npm run build", workdir=theme_dir, service="dev")
-    run_docker_cmd(
-        "composer install --no-dev  --optimize-autoloader",
-        workdir=theme_dir,
-        service="dev",
+    theme_dir = f"{BEDROCK_ROOT}/{project}/web/app/themes/{theme}"
+    run_docker_cmds (
+        "npm install",
+        "npm run build",
+        "bash /app/scripts/update_dev_user.sh", 
+        f"chgrp -R devs {BEDROCK_ROOT}",
+        f"chown -R www-data {BEDROCK_ROOT}",
+        f"chmod -R g+rw {BEDROCK_ROOT}",
+        workdir=theme_dir
     )
-    run_docker_cmd(f"chgrp -R developers /app/projects", service="dev")
-    run_docker_cmd(f"chmod -R g+rw /app/projects", service="dev")
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

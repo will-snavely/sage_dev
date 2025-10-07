@@ -12,48 +12,38 @@ logger = logging.getLogger(__name__)
 
 def create_bedrock_project(args):
     name = args.name
-    run_docker_cmd(f"bash /app/scripts/create_dev_group.sh", service="dev")
-    run_docker_cmd(
-        f"composer create-project roots/bedrock {name}",
-        service="dev",
-        workdir="/app/projects",
+    run_docker_cmds(
+        "bash /app/scripts/update_dev_user.sh",
+        f"composer create-project roots/bedrock {name}", 
+        f"python3 /app/scripts/gen_bedrock_config.py {name}",
+        f"chgrp -R devs {BEDROCK_ROOT}",
+        f"chown -R www-data {BEDROCK_ROOT}",
+        f"chmod -R g+rw {BEDROCK_ROOT}",
+        workdir=BEDROCK_ROOT
     )
-    run_docker_cmd(f"chgrp -R developers /app/projects", service="dev")
-    run_docker_cmd(f"chmod -R g+rw /app/projects", service="dev")
     save_bedrock_config({"working_project": name, "working_theme": ""})
 
 
 def deploy_bedrock_project(args):
     name = args.name
     if os.path.exists(f"./projects/{name}"):
-        run_docker_cmd(f"mkdir -p /www/srv/bedrock", service="web")
-        run_docker_cmd(
-            f"rsync -a --exclude node_modules /app/projects/{name} /www/srv/bedrock/",
-            service="web",
-        )
-        run_docker_cmd(
-            f"python3 /app/scripts/gen_bedrock_config.py {name}", service="web"
-        )
-        run_docker_cmd(
-            f"python3 /app/scripts/gen_apache_config.py {name}", service="web"
-        )
-        run_docker_cmd("chown -R www-data:www-data /www/srv/bedrock", service="web")
-        run_docker_cmd(
+        run_docker_cmd(f"chown -R www-data {BEDROCK_ROOT}")
+
+        run_docker_cmds(
             "composer update",
-            workdir=f"/www/srv/bedrock/{name}",
-            user="www-data",
-            service="web",
+            "composer install",
+            f"chgrp -R devs {BEDROCK_ROOT}",
+            f"chmod -R g+rw {BEDROCK_ROOT}",
+            workdir=f"{BEDROCK_ROOT}/{name}", 
+            user="www-data"
         )
-        run_docker_cmd(
-            "composer install --no-dev  --optimize-autoloader",
-            workdir=f"/www/srv/bedrock/{name}",
-            user="www-data",
-            service="web",
+        run_docker_cmds(
+            f"python3 /app/scripts/gen_apache_config.py {name}",
+            "a2ensite wordpress",
+            "a2enmod rewrite",
+            "a2dissite 000-default",
+            "service apache2 reload"
         )
-        run_docker_cmd("a2ensite wordpress", service="web")
-        run_docker_cmd("a2enmod rewrite", service="web")
-        run_docker_cmd("a2dissite 000-default", service="web")
-        run_docker_cmd("service apache2 reload", service="web")
     else:
         raise FileNotFoundError(f"Project {name} not found.")
 
