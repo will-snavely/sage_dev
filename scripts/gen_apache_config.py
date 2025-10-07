@@ -8,12 +8,8 @@ apache_config = """
     DocumentRoot {wp_root}
     <Directory {wp_root}>
         Options FollowSymLinks
-        AllowOverride Limit Options FileInfo
+        AllowOverride All
         DirectoryIndex index.php
-        Require all granted
-    </Directory>
-    <Directory {wp_root}/wp-content>
-        Options FollowSymLinks
         Require all granted
     </Directory>
 </VirtualHost>
