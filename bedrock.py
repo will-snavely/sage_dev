@@ -13,13 +13,12 @@ logger = logging.getLogger(__name__)
 def create_bedrock_project(args):
     name = args.name
     run_docker_cmds(
-        "bash /app/scripts/update_dev_user.sh",
-        f"composer create-project roots/bedrock {name}", 
+        f"composer create-project roots/bedrock {name}",
         f"python3 /app/scripts/gen_bedrock_config.py {name}",
         f"chgrp -R devs {BEDROCK_ROOT}",
         f"chown -R www-data {BEDROCK_ROOT}",
         f"chmod -R g+rw {BEDROCK_ROOT}",
-        workdir=BEDROCK_ROOT
+        workdir=BEDROCK_ROOT,
     )
     save_bedrock_config({"working_project": name, "working_theme": ""})
 
@@ -27,25 +26,26 @@ def create_bedrock_project(args):
 def deploy_bedrock_project(args):
     name = args.name
     if os.path.exists(f"./projects/{name}"):
-        run_docker_cmd(f"chown -R www-data {BEDROCK_ROOT}")
-
         run_docker_cmds(
             "composer update",
             "composer install",
             f"chgrp -R devs {BEDROCK_ROOT}",
             f"chmod -R g+rw {BEDROCK_ROOT}",
-            workdir=f"{BEDROCK_ROOT}/{name}", 
-            user="www-data"
-        )
-        run_docker_cmds(
+            f"chown -R www-data {BEDROCK_ROOT}",
             f"python3 /app/scripts/gen_apache_config.py {name}",
             "a2ensite wordpress",
             "a2enmod rewrite",
             "a2dissite 000-default",
-            "service apache2 reload"
+            "service apache2 reload",
+            workdir=f"{BEDROCK_ROOT}/{name}",
         )
     else:
         raise FileNotFoundError(f"Project {name} not found.")
+
+
+def remove_bedrock_project(args):
+    name = args.name
+    run_docker_cmd(f"rm -rf {BEDROCK_ROOT}/{name}")
 
 
 if __name__ == "__main__":
@@ -71,6 +71,10 @@ if __name__ == "__main__":
         help="The name of the project.",
     )
     parser_deploy.set_defaults(func=deploy_bedrock_project)
+
+    parser_rm = subparsers.add_parser("rm", help="Remove a project")
+    parser_rm.add_argument("name", help="The name of the project.")
+    parser_rm.set_defaults(func=remove_bedrock_project)
 
     args = parser.parse_args()
     log_level = logging.DEBUG if args.verbose else logging.INFO

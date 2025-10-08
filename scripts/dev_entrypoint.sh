@@ -1,2 +1,2 @@
-bash /app/scripts/update_dev_user.sh
+bash /app/scripts/update_dev_permissions.sh
 apache2ctl -D FOREGROUND

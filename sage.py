@@ -10,12 +10,11 @@ def create_sage_theme(args):
     project = args.project
     theme = args.theme
     themes_dir = f"{BEDROCK_ROOT}/{project}/web/app/themes"
-    run_docker_cmds (
+    run_docker_cmds(
         f"composer create-project roots/sage {theme}",
-        "bash /app/scripts/update_dev_user.sh", 
         f"chgrp -R devs {BEDROCK_ROOT}",
-        f"chown -R www-data {BEDROCK_ROOT}",
         f"chmod -R g+rw {BEDROCK_ROOT}",
+        f"chown -R www-data {BEDROCK_ROOT}",
         workdir=themes_dir,
     )
 
@@ -23,8 +22,7 @@ def create_sage_theme(args):
     search = r"\/app\/themes\/sage\/public\/build\/"
     replace = r"\/app\/themes\/" + theme + "\/public\/build\/"
     run_docker_cmd(
-        f"sed -i 's/{search}/{replace}/g' vite.config.js",
-        workdir=new_theme_dir
+        f"sed -i 's/{search}/{replace}/g' vite.config.js", workdir=new_theme_dir
     )
 
     save_bedrock_config({"working_project": project, "working_theme": theme})
@@ -34,15 +32,15 @@ def build_sage_theme(args):
     project = args.project
     theme = args.theme
     theme_dir = f"{BEDROCK_ROOT}/{project}/web/app/themes/{theme}"
-    run_docker_cmds (
+    run_docker_cmds(
         "npm install",
         "npm run build",
-        "bash /app/scripts/update_dev_user.sh", 
         f"chgrp -R devs {BEDROCK_ROOT}",
-        f"chown -R www-data {BEDROCK_ROOT}",
         f"chmod -R g+rw {BEDROCK_ROOT}",
-        workdir=theme_dir
+        f"chown -R www-data {BEDROCK_ROOT}",
+        workdir=theme_dir,
     )
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
