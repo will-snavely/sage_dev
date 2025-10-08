@@ -3,6 +3,8 @@ services:
     image: "horsecatdog/bedrock:latest"
     depends_on:
       - db
+    entrypoint:
+        ["/bin/sh", "/app/scripts/dev_entrypoint.sh"]
     environment:
       DEV_GROUP_ID: ${DEV_GROUP_ID}
       DEV_USER_ID: ${DEV_USER_ID}
