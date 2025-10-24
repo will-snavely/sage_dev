@@ -48,6 +48,19 @@ def remove_bedrock_project(args):
     run_docker_cmd(f"rm -rf {BEDROCK_ROOT}/{name}")
 
 
+def update_dependencies(args):
+    name = args.name
+    if os.path.exists(f"./projects/{name}"):
+        run_docker_cmds(
+            "composer update",
+            "composer install",
+            f"chgrp -R devs {BEDROCK_ROOT}",
+            f"chmod -R g+rw {BEDROCK_ROOT}",
+            f"chown -R www-data {BEDROCK_ROOT}",
+            workdir=f"{BEDROCK_ROOT}/{name}",
+        )
+
+
 if __name__ == "__main__":
     config = load_bedrock_config()
     parser = argparse.ArgumentParser()
@@ -75,6 +88,18 @@ if __name__ == "__main__":
     parser_rm = subparsers.add_parser("rm", help="Remove a project")
     parser_rm.add_argument("name", help="The name of the project.")
     parser_rm.set_defaults(func=remove_bedrock_project)
+
+    parser_update_dep = subparsers.add_parser(
+        "update-dep", help="Update composer dependencies"
+    )
+    parser_update_dep.add_argument(
+        "--name",
+        "-n",
+        default=config.get("working_project"),
+        type=str,
+        help="The name of the project.",
+    )
+    parser_update_dep.set_defaults(func=update_dependencies)
 
     args = parser.parse_args()
     log_level = logging.DEBUG if args.verbose else logging.INFO

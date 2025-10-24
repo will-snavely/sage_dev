@@ -42,6 +42,15 @@ def build_sage_theme(args):
     )
 
 
+def run_dev_server(args):
+    project = args.project
+    theme = args.theme
+    theme_dir = f"{BEDROCK_ROOT}/{project}/web/app/themes/{theme}"
+    run_docker_cmds(
+        "npm run dev",
+        user="www-data",
+        workdir=theme_dir)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     config = load_bedrock_config()
@@ -73,6 +82,23 @@ if __name__ == "__main__":
         help="The name of the bedrock project.",
     )
     parser_build.add_argument(
+        "--theme",
+        "-t",
+        default=config.get("working_theme"),
+        type=str,
+        help="The name of the sage theme.",
+    )
+
+    parser_run_dev = subparsers.add_parser("dev", help="Run the development server")
+    parser_run_dev.set_defaults(func=run_dev_server)
+    parser_run_dev.add_argument(
+        "--project",
+        "-p",
+        default=config.get("working_project"),
+        type=str,
+        help="The name of the bedrock project.",
+    )
+    parser_run_dev.add_argument(
         "--theme",
         "-t",
         default=config.get("working_theme"),
