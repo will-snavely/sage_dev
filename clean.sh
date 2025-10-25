@@ -1,2 +1,1 @@
-docker-compose down
-docker volume prune
+docker-compose down -v
