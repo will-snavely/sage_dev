@@ -1,0 +1,23 @@
+services:
+  web:
+    image: "horsecatdog/bedrock:latest"
+    build: !reset null
+    entrypoint:
+        ["/bin/sh", "/app/scripts/test_entrypoint.sh"]
+    environment:
+      DEV_GROUP_ID: ${DEV_GROUP_ID}
+      DEV_USER_ID: ${DEV_USER_ID}
+    volumes:
+      - ./projects:/www/srv
+      - ./scripts:/app/scripts
+
+  db:
+    environment:
+      MARIADB_DATABASE: ""
+      MARIADB_USER: ""
+      MARIADB_ROOT_PASSWORD: test
+    volumes:
+      - mariadb_test_data:/var/lib/mysql
+
+volumes:
+  mariadb_test_data:

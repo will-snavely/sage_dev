@@ -20,7 +20,7 @@ def create_sage_theme(args):
 
     new_theme_dir = f"{themes_dir}/{theme}"
     search = r"\/app\/themes\/sage\/public\/build\/"
-    replace = r"\/app\/themes\/" + theme + "\/public\/build\/"
+    replace = r"\/app\/themes\/" + theme + r"\/public\/build\/"
     run_docker_cmd(
         f"sed -i 's/{search}/{replace}/g' vite.config.js", workdir=new_theme_dir
     )
@@ -33,6 +33,8 @@ def build_sage_theme(args):
     theme = args.theme
     theme_dir = f"{BEDROCK_ROOT}/{project}/web/app/themes/{theme}"
     run_docker_cmds(
+        "composer update",
+        "composer install",
         "npm install",
         "npm run build",
         f"chgrp -R devs {BEDROCK_ROOT}",

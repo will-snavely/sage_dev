@@ -1,0 +1,43 @@
+services:
+  web:
+    image: "horsecatdog/bedrock:latest"
+    build: !reset null
+    entrypoint:
+        ["/bin/sh", "/app/scripts/dev_entrypoint.sh"]
+    environment:
+      BEDROCK_ROOT: "/www/srv"
+      DEV_GROUP_ID: ${DEV_GROUP_ID}
+      DEV_USER_ID: ${DEV_USER_ID}
+      WORDPRESS_DB_HOST: "db:3306"
+      WORDPRESS_DB: wordpress_dev
+      WORDPRESS_DB_USER: wordpress_dev
+      WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password_dev
+      SITE_URL: ${SITE_URL}
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./projects:/www/srv
+      - ./scripts:/app/scripts
+    secrets:
+      - db_password_dev
+
+  db:
+    environment:
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password_dev
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: wordpress
+      MARIADB_PASSWORD_FILE: /run/secrets/db_password_dev
+    volumes:
+      - mariadb_dev_data:/var/lib/mysql
+    secrets:
+      - db_password_dev
+      - db_root_password_dev
+
+volumes:
+  mariadb_dev_data:
+
+secrets:
+  db_password_dev:
+    file: .secret_db_password_dev
+  db_root_password_dev:
+    file: .secret_db_root_password_dev
