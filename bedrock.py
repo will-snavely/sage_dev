@@ -60,16 +60,6 @@ def update_dependencies(args):
             user="www-data"
         )
 
-
-def run_tests(args):
-    name = args.name
-    if os.path.exists(f"./projects/{name}"):
-        run_docker_cmds(
-            "./vendor/bin/phpunit web/app/tests",
-            workdir=f"{BEDROCK_ROOT}/{name}"
-        )
-
-
 if __name__ == "__main__":
     config = load_bedrock_config()
     parser = argparse.ArgumentParser()
@@ -109,18 +99,6 @@ if __name__ == "__main__":
         help="The name of the project.",
     )
     parser_update_dep.set_defaults(func=update_dependencies)
-
-    parser_test = subparsers.add_parser(
-        "test", help="Run test suite"
-    )
-    parser_test.add_argument(
-        "--name",
-        "-n",
-        default=config.get("working_project"),
-        type=str,
-        help="The name of the project.",
-    )
-    parser_test.set_defaults(func=run_tests)
 
     args = parser.parse_args()
     log_level = logging.DEBUG if args.verbose else logging.INFO
