@@ -24,8 +24,8 @@ services:
   db:
     environment:
       MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password_dev
-      MARIADB_DATABASE: wordpress
-      MARIADB_USER: wordpress
+      MARIADB_DATABASE: wordpress_dev
+      MARIADB_USER: wordpress_dev
       MARIADB_PASSWORD_FILE: /run/secrets/db_password_dev
     volumes:
       - mariadb_dev_data:/var/lib/mysql
