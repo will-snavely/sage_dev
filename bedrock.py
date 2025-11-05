@@ -15,9 +15,9 @@ def create_bedrock_project(args):
     run_docker_cmds(
         f"composer create-project roots/bedrock {name}",
         f"python3 /app/scripts/gen_bedrock_config.py {name}",
-        f"chgrp -R devs {BEDROCK_ROOT}",
-        f"chown -R www-data {BEDROCK_ROOT}",
-        f"chmod -R g+rw {BEDROCK_ROOT}",
+        f"chgrp -R devs {BEDROCK_ROOT}/{name}",
+        f"chown -R www-data {BEDROCK_ROOT}/{name}",
+        f"chmod -R g+rw {BEDROCK_ROOT}/{name}",
         workdir=BEDROCK_ROOT,
     )
     save_bedrock_config({"working_project": name, "working_theme": ""})
@@ -30,9 +30,10 @@ def deploy_bedrock_project(args):
             f"python3 /app/scripts/gen_bedrock_config.py {name}",
             "composer update",
             "composer install",
-            f"chgrp -R devs {BEDROCK_ROOT}",
-            f"chmod -R g+rw {BEDROCK_ROOT}",
-            f"chown -R www-data {BEDROCK_ROOT}",
+            workdir=f"{BEDROCK_ROOT}/{name}",
+            user="www-data"
+        )
+        run_docker_cmds(
             f"python3 /app/scripts/gen_apache_config.py {name}",
             "a2ensite wordpress",
             "a2enmod rewrite",
@@ -55,10 +56,8 @@ def update_dependencies(args):
         run_docker_cmds(
             "composer update",
             "composer install",
-            f"chgrp -R devs {BEDROCK_ROOT}",
-            f"chmod -R g+rw {BEDROCK_ROOT}",
-            f"chown -R www-data {BEDROCK_ROOT}",
             workdir=f"{BEDROCK_ROOT}/{name}",
+            user="www-data"
         )
 
 
@@ -69,10 +68,6 @@ def run_tests(args):
             "./vendor/bin/phpunit web/app/tests",
             workdir=f"{BEDROCK_ROOT}/{name}"
         )
-
-
-if __name__ == "__main__":
-    config = load_bedrock_config()
 
 
 if __name__ == "__main__":

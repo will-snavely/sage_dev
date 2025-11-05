@@ -22,7 +22,7 @@ def save_bedrock_config(config, dest=BEDROCK_CONF):
 
 
 def docker_cmd(cmd, service, user, workdir):
-    result = ["docker-compose", "exec"]
+    result = ["docker-compose", "-f", "compose.yaml", "-f", "compose.dev.yaml", "exec"]
     result += ["--user", user] if user else []
     result += ["--workdir", workdir] if workdir else []
     result += [service]
