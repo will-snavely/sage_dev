@@ -12,9 +12,9 @@ def create_sage_theme(args):
     themes_dir = f"{BEDROCK_ROOT}/{project}/web/app/themes"
     run_docker_cmds(
         f"composer create-project roots/sage {theme}",
-        f"chgrp -R devs {BEDROCK_ROOT}",
-        f"chmod -R g+rw {BEDROCK_ROOT}",
-        f"chown -R www-data {BEDROCK_ROOT}",
+        f"chgrp -R devs {themes_dir}/{theme}",
+        f"chmod -R g+rw {themes_dir}/{theme}",
+        f"chown -R www-data {themes_dir}/{theme}",
         workdir=themes_dir,
     )
 
@@ -37,9 +37,9 @@ def build_sage_theme(args):
         "composer install",
         "npm install",
         "npm run build",
-        f"chgrp -R devs {BEDROCK_ROOT}",
-        f"chmod -R g+rw {BEDROCK_ROOT}",
-        f"chown -R www-data {BEDROCK_ROOT}",
+        f"chgrp -R devs {theme_dir}/public",
+        f"chmod -R g+rw {theme_dir}/public",
+        f"chown -R www-data {theme_dir}/public",
         workdir=theme_dir,
     )
 

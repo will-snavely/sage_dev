@@ -25,21 +25,21 @@ def create_bedrock_project(args):
 
 def deploy_bedrock_project(args):
     name = args.name
+    path = f"{BEDROCK_ROOT}/{name}"
     if os.path.exists(f"./projects/{name}"):
         run_docker_cmds(
             f"python3 /app/scripts/gen_bedrock_config.py {name}",
             "composer update",
             "composer install",
+            user="www-data",
             workdir=f"{BEDROCK_ROOT}/{name}",
-            user="www-data"
         )
         run_docker_cmds(
             f"python3 /app/scripts/gen_apache_config.py {name}",
             "a2ensite wordpress",
             "a2enmod rewrite",
             "a2dissite 000-default",
-            "service apache2 reload",
-            workdir=f"{BEDROCK_ROOT}/{name}",
+            "service apache2 reload"
         )
     else:
         raise FileNotFoundError(f"Project {name} not found.")
