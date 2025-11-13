@@ -1,15 +1,17 @@
 from horsecatdog/bedrock:latest
 
+ARG PROJECTS_DIR
 ARG PROJECT
 ARG THEME
 
+ENV PROJECTS_DIR=$PROJECTS_DIR
 ENV PROJECT_NAME=$PROJECT
 ENV THEME_NAME=$THEME
 ENV BEDROCK_ROOT=/www/srv
 ENV PROJECT_ROOT=/www/srv/$PROJECT
 ENV THEME_ROOT=/www/srv/$PROJECT/web/app/themes/$THEME
 
-COPY ./projects/$PROJECT /www/srv/$PROJECT/
+COPY $PROJECTS_DIR/projects/$PROJECT /www/srv/$PROJECT/
 COPY ./scripts /app/scripts
 WORKDIR /www/srv/$PROJECT
 RUN composer update && composer install 

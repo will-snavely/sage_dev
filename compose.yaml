@@ -5,6 +5,7 @@ services:
         context: .
         dockerfile: images/web/Dockerfile
         args:
+          PROJECTS_DIR: ${PROJECTS_DIR}
           PROJECT: ${PROJECT}
           THEME: ${THEME}
     depends_on:

@@ -16,7 +16,7 @@ services:
     ports:
       - "5173:5173"
     volumes:
-      - ./projects:/www/srv
+      - ${PROJECTS_DIR}:/www/srv
       - ./scripts:/app/scripts
     secrets:
       - db_password_dev
@@ -38,6 +38,6 @@ volumes:
 
 secrets:
   db_password_dev:
-    file: .secret_db_password_dev
+    file: ${DB_WORDPRESS_PASSWORD_FILE}
   db_root_password_dev:
-    file: .secret_db_root_password_dev
+    file: ${DB_ROOT_PASSWORD_FILE}
