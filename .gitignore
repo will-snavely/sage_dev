@@ -1,6 +1,5 @@
 .env
 themes
-projects
 .secret*
 .bedrock.conf
 __pycache__
