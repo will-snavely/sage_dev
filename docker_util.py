@@ -21,11 +21,11 @@ def save_bedrock_config(config, dest=BEDROCK_CONF):
         json.dump(config, f, indent=4)
 
 
-def docker_cmd(cmd, service, user, workdir):
-    result = ["docker-compose", "-f", "compose.yaml", "-f", "compose.dev.yaml", "exec"]
+def docker_cmd(cmd, container, user, workdir):
+    result = ["docker", "exec"]
     result += ["--user", user] if user else []
     result += ["--workdir", workdir] if workdir else []
-    result += [service]
+    result += [container]
     result += shlex.split(cmd) if isinstance(cmd, str) else list(cmd)
     return result
 
@@ -35,12 +35,12 @@ def log_docker_cmd(cmd, level=logging.DEBUG, *args, **kwargs):
     logger.log(level, msg)
 
 
-def run_docker_cmd(cmd, service="web", user=None, workdir=None):
-    dcmd = docker_cmd(cmd, service=service, user=user, workdir=workdir)
+def run_docker_cmd(cmd, container="sage-web-ctr", user=None, workdir=None):
+    dcmd = docker_cmd(cmd, container, user=user, workdir=workdir)
     log_docker_cmd(dcmd)
     return subprocess.run(dcmd)
 
 
-def run_docker_cmds(*cmds, service="web", user=None, workdir=None):
+def run_docker_cmds(*cmds, container="sage-web-ctr", user=None, workdir=None):
     for cmd in cmds:
-        run_docker_cmd(cmd, service, user=user, workdir=workdir)
+        run_docker_cmd(cmd, container, user=user, workdir=workdir)

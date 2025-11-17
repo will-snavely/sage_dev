@@ -1,6 +1,7 @@
 services:
   web:
     image: "horsecatdog/bedrock:latest"
+    container_name: sage-web-ctr
     build: !reset null
     entrypoint:
         ["/bin/sh", "/app/scripts/dev_entrypoint.sh"]
@@ -22,6 +23,7 @@ services:
       - db_password_dev
 
   db:
+    container_name: sage-db-ctr
     environment:
       MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password_dev
       MARIADB_DATABASE: wordpress_dev
