@@ -26,6 +26,10 @@ def create_bedrock_project(args):
 def deploy_bedrock_project(args):
     name = args.name
     path = f"{BEDROCK_ROOT}/{name}"
+
+    if args.chmod:
+        run_docker_cmd(f"chown -R www-data {BEDROCK_ROOT}/{name}")
+
     run_docker_cmds(
         f"python3 /app/scripts/gen_bedrock_config.py {name}",
         "composer update",
@@ -76,7 +80,13 @@ if __name__ == "__main__":
         "-n",
         default=config.get("working_project"),
         type=str,
-        help="The name of the project.",
+        help="The name of the project."
+    )
+    parser_deploy.add_argument(
+        "--chmod",
+        "-c",
+        action="store_true", 
+        help="Set ownership of project directory"
     )
     parser_deploy.set_defaults(func=deploy_bedrock_project)
 
