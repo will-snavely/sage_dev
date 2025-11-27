@@ -14,7 +14,7 @@ def create_bedrock_project(args):
     name = args.name
     run_docker_cmds(
         f"composer create-project roots/bedrock {name}",
-        f"python3 /app/scripts/gen_bedrock_config.py {name}",
+        f"python3 /app/scripts/web/gen_bedrock_config.py {name}",
         f"chgrp -R devs {BEDROCK_ROOT}/{name}",
         f"chown -R www-data {BEDROCK_ROOT}/{name}",
         f"chmod -R g+rw {BEDROCK_ROOT}/{name}",
@@ -31,14 +31,14 @@ def deploy_bedrock_project(args):
         run_docker_cmd(f"chown -R www-data {BEDROCK_ROOT}/{name}")
 
     run_docker_cmds(
-        f"python3 /app/scripts/gen_bedrock_config.py {name}",
+        f"python3 /app/scripts/web/gen_bedrock_config.py {name}",
         "composer update",
         "composer install",
         user="www-data",
         workdir=f"{BEDROCK_ROOT}/{name}",
     )
     run_docker_cmds(
-        f"python3 /app/scripts/gen_apache_config.py {name}",
+        f"python3 /app/scripts/web/gen_apache_config.py {name}",
         "a2ensite wordpress",
         "a2enmod rewrite",
         "a2dissite 000-default",

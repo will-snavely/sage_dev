@@ -1,26 +1,44 @@
 services:
+  proxy:
+    image: nginx:alpine
+    entrypoint:
+        ["/bin/sh", "/app/scripts/proxy/dev_entrypoint.sh"]
+    environment:
+      PROXY_PORT: ${PROXY_PORT}
+      WEB_HOSTNAME: ${WEB_HOSTNAME}
+      WEB_PORT: ${WEB_PORT}
+    ports:
+      - "${LOCAL_PORT}:${PROXY_PORT}"
+    volumes:
+      - ./scripts:/app/scripts
+    networks:
+      - dev_network
+
   web:
     image: "horsecatdog/bedrock:latest"
     container_name: sage-web-ctr
     build: !reset null
     entrypoint:
-        ["/bin/sh", "/app/scripts/dev_entrypoint.sh"]
+        ["/bin/sh", "/app/scripts/web/dev_entrypoint.sh"]
     environment:
       BEDROCK_ROOT: "/www/srv"
       DEV_GROUP_ID: ${DEV_GROUP_ID}
-      DEV_USER_ID: ${DEV_USER_ID}
       WORDPRESS_DB_HOST: "db:3306"
-      WORDPRESS_DB: wordpress_dev
-      WORDPRESS_DB_USER: wordpress_dev
+      WORDPRESS_DB: ${WORDPRESS_DB}
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
       WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password_dev
-      SITE_URL: ${SITE_URL}
-    ports:
-      - "5173:5173"
+      WEB_HOSTNAME: ${WEB_HOSTNAME}
+      WEB_PORT: ${WEB_PORT}
     volumes:
       - ${PROJECTS_DIR}:/www/srv
       - ./scripts:/app/scripts
     secrets:
       - db_password_dev
+    networks:
+      - dev_network
+    expose:
+      - "5173"
+      - "${WEB_PORT}"
 
   db:
     container_name: sage-db-ctr
@@ -34,9 +52,17 @@ services:
     secrets:
       - db_password_dev
       - db_root_password_dev
+    expose:
+      - "3306"
+    networks:
+      - dev_network
 
 volumes:
   mariadb_dev_data:
+
+networks:
+  dev_network:
+    driver: bridge
 
 secrets:
   db_password_dev:

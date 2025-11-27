@@ -3,7 +3,7 @@ services:
     image: "horsecatdog/bedrock:latest"
     build: !reset null
     entrypoint:
-        ["/bin/sh", "/app/scripts/test_entrypoint.sh"]
+        ["/bin/sh", "/app/scripts/web/test_entrypoint.sh"]
     environment:
       DEV_GROUP_ID: ${DEV_GROUP_ID}
       DEV_USER_ID: ${DEV_USER_ID}
