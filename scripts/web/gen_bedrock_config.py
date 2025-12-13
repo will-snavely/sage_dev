@@ -48,6 +48,11 @@ if __name__ == "__main__":
 
     bedrock_root = os.environ["BEDROCK_ROOT"]
     bedrock_env_file = f"{bedrock_root}/{args.name}/.env"
+    extra_config_file = f"{bedrock_root}/{args.name}/.env.extra"
+    extra_config = ""
+    if os.path.exists(extra_config_file):
+        with open(extra_config_file) as f:
+            extra_config = f.read()
     with open(bedrock_env_file, "w") as f:
         config = get_bedrock_config(
             os.environ["WORDPRESS_DB_HOST"],
@@ -59,3 +64,4 @@ if __name__ == "__main__":
         )
         for k, v in config.items():
             f.write(f'{k}="{v}"\n')
+        f.write(extra_config)
