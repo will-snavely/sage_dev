@@ -1,20 +1,28 @@
 services:
   proxy:
+    depends_on:
+      - web
     image: nginx:alpine
     entrypoint:
         ["/bin/sh", "/app/scripts/proxy/dev_entrypoint.sh"]
     environment:
-      PROXY_PORT: ${PROXY_PORT}
+      USE_HTTPS: ${USE_HTTPS}
+      PROXY_PORT_HTTP: ${PROXY_PORT_HTTP}
+      PROXY_PORT_HTTPS: ${PROXY_PORT_HTTPS}
       WEB_HOSTNAME: ${WEB_HOSTNAME}
-      WEB_PORT: ${WEB_PORT}
+      WEB_PORT: ${WEB_PORT_HTTP}
     ports:
-      - "${LOCAL_PORT}:${PROXY_PORT}"
+      - "${LOCAL_PORT_HTTP}:${PROXY_PORT_HTTP}"
+      - "${LOCAL_PORT_HTTPS}:${PROXY_PORT_HTTPS}"
     volumes:
       - ./scripts:/app/scripts
+      - ${CERTS_PATH}:/etc/letsencrypt:ro
     networks:
       - dev_network
 
   web:
+    depends_on:
+      - db
     image: "horsecatdog/bedrock:latest"
     container_name: sage-web-ctr
     build: !reset null
@@ -28,7 +36,8 @@ services:
       WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
       WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password_dev
       WEB_HOSTNAME: ${WEB_HOSTNAME}
-      WEB_PORT: ${WEB_PORT}
+      WEB_PORT: ${WEB_PORT_HTTP}
+      WEB_PROTOCOL: ${WEB_PROTOCOL}
     volumes:
       - ${PROJECTS_DIR}:/www/srv
       - ./scripts:/app/scripts
@@ -38,7 +47,7 @@ services:
       - dev_network
     expose:
       - "5173"
-      - "${WEB_PORT}"
+      - "${WEB_PORT_HTTP}"
 
   db:
     container_name: sage-db-ctr

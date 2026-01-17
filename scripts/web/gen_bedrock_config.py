@@ -20,6 +20,7 @@ def get_bedrock_config(
     db_name,
     db_user,
     db_password_file,
+    web_protocol,
     web_hostname,
     web_port,
 ):
@@ -31,7 +32,7 @@ def get_bedrock_config(
     config["DB_HOST"] = db_host
 
     config["WP_ENV"] = "development"
-    config["WP_HOME"] = f"http://{web_hostname}"
+    config["WP_HOME"] = f"{web_protocol}://{web_hostname}"
     config["WP_SITEURL"] = "${WP_HOME}/wp"
     config["WP_DEBUG_LOG"] = f"debug.log"
 
@@ -59,6 +60,7 @@ if __name__ == "__main__":
             os.environ["WORDPRESS_DB"], 
             os.environ["WORDPRESS_DB_USER"], 
             os.environ["WORDPRESS_DB_PASSWORD_FILE"],
+            os.environ["WEB_PROTOCOL"],
             os.environ["WEB_HOSTNAME"],
             os.environ["WEB_PORT"]
         )
