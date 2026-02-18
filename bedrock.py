@@ -20,15 +20,11 @@ def create_bedrock_project(args):
         f"chmod -R g+rw {BEDROCK_ROOT}/{name}",
         workdir=BEDROCK_ROOT,
     )
-    save_bedrock_config({"working_project": name, "working_theme": ""})
 
 
 def deploy_bedrock_project(args):
     name = args.name
     path = f"{BEDROCK_ROOT}/{name}"
-
-    if args.chmod:
-        run_docker_cmd(f"chown -R www-data {BEDROCK_ROOT}/{name}")
 
     run_docker_cmds(
         f"python3 /app/scripts/web/gen_bedrock_config.py {name}",
@@ -63,14 +59,12 @@ def update_dependencies(args):
     )
 
 if __name__ == "__main__":
-    config = load_bedrock_config()
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument(
         "--web_container",
         "-w",
-        default=config.get("web_container"),
         type=str,
         help="The name of the project."
     )
@@ -88,15 +82,8 @@ if __name__ == "__main__":
     parser_deploy.add_argument(
         "--name",
         "-n",
-        default=config.get("working_project"),
         type=str,
         help="The name of the project."
-    )
-   parser_deploy.add_argument(
-        "--chmod",
-        "-c",
-        action="store_true", 
-        help="Set ownership of project directory"
     )
     parser_deploy.set_defaults(func=deploy_bedrock_project)
 
@@ -110,7 +97,6 @@ if __name__ == "__main__":
     parser_update_dep.add_argument(
         "--name",
         "-n",
-        default=config.get("working_project"),
         type=str,
         help="The name of the project.",
     )
@@ -119,5 +105,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     log_level = logging.DEBUG if args.verbose else logging.INFO
     logging.basicConfig(level=log_level)
-    logger.debug(f"Configuration: {config}")
     args.func(args)

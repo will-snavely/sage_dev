@@ -35,12 +35,12 @@ def log_docker_cmd(cmd, level=logging.DEBUG, *args, **kwargs):
     logger.log(level, msg)
 
 
-def run_docker_cmd(cmd, container="sage-web-ctr", user=None, workdir=None):
+def run_docker_cmd(cmd, container, user=None, workdir=None):
     dcmd = docker_cmd(cmd, container, user=user, workdir=workdir)
     log_docker_cmd(dcmd)
     return subprocess.run(dcmd)
 
 
-def run_docker_cmds(*cmds, container="sage-web-ctr", user=None, workdir=None):
+def run_docker_cmds(*cmds, container, user=None, workdir=None):
     for cmd in cmds:
         run_docker_cmd(cmd, container, user=user, workdir=workdir)

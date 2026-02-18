@@ -15,6 +15,7 @@ def create_sage_theme(args):
         f"chgrp -R devs {themes_dir}/{theme}",
         f"chmod -R g+rw {themes_dir}/{theme}",
         f"chown -R www-data {themes_dir}/{theme}",
+        container=args.web_container,
         workdir=themes_dir,
     )
 
@@ -24,8 +25,6 @@ def create_sage_theme(args):
     run_docker_cmd(
         f"sed -i 's/{search}/{replace}/g' vite.config.js", workdir=new_theme_dir
     )
-
-    save_bedrock_config({"working_project": project, "working_theme": theme})
 
 
 def build_sage_theme(args):
@@ -40,7 +39,8 @@ def build_sage_theme(args):
         f"chgrp -R devs {theme_dir}/public",
         f"chmod -R g+rw {theme_dir}/public",
         f"chown -R www-data {theme_dir}/public",
-        workdir=theme_dir,
+        container=args.web_container,
+        workdir=theme_dir
     )
 
 
@@ -51,13 +51,20 @@ def run_dev_server(args):
     run_docker_cmds(
         "npm run dev",
         user="www-data",
-        workdir=theme_dir)
+        container=args.web_container,
+        workdir=theme_dir
+    )
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    config = load_bedrock_config()
-
     parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument(
+        "--web_container",
+        "-w",
+        type=str,
+        help="The name of the project."
+    )
+
     subparsers = parser.add_subparsers(
         title="Commands", help="Subcommand help.", required=True
     )
@@ -68,7 +75,6 @@ if __name__ == "__main__":
     parser_init.add_argument(
         "--project",
         "-p",
-        default=config.get("working_project"),
         type=str,
         help="The name of the bedrock project.",
     )
@@ -79,14 +85,12 @@ if __name__ == "__main__":
     parser_build.add_argument(
         "--project",
         "-p",
-        default=config.get("working_project"),
         type=str,
         help="The name of the bedrock project.",
     )
     parser_build.add_argument(
         "--theme",
         "-t",
-        default=config.get("working_theme"),
         type=str,
         help="The name of the sage theme.",
     )
@@ -96,14 +100,12 @@ if __name__ == "__main__":
     parser_run_dev.add_argument(
         "--project",
         "-p",
-        default=config.get("working_project"),
         type=str,
         help="The name of the bedrock project.",
     )
     parser_run_dev.add_argument(
         "--theme",
         "-t",
-        default=config.get("working_theme"),
         type=str,
         help="The name of the sage theme.",
     )
