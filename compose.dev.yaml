@@ -24,7 +24,6 @@ services:
     depends_on:
       - db
     image: "horsecatdog/bedrock:latest"
-    container_name: sage-web-ctr
     build: !reset null
     entrypoint:
         ["/bin/sh", "/app/scripts/web/dev_entrypoint.sh"]
@@ -38,6 +37,9 @@ services:
       WEB_HOSTNAME: ${WEB_HOSTNAME}
       WEB_PORT: ${WEB_PORT_HTTP}
       WEB_PROTOCOL: ${WEB_PROTOCOL}
+      PROJECTS_DIR: ${PROJECTS_DIR}
+      PROJECT: ${PROJECT}
+      THEME: ${THEME}
     volumes:
       - ${PROJECTS_DIR}:/www/srv
       - ./scripts:/app/scripts
@@ -50,7 +52,7 @@ services:
       - "${WEB_PORT_HTTP}"
 
   db:
-    container_name: sage-db-ctr
+    image: "mariadb:latest"
     environment:
       MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password_dev
       MARIADB_DATABASE: wordpress_dev
