@@ -1,23 +1,71 @@
 services:
+  proxy:
+    depends_on:
+      - web
+    image: nginx:alpine
+    entrypoint:
+        ["/bin/sh", "/app/scripts/proxy/dev_entrypoint.sh"]
+    environment:
+      USE_HTTPS: false
+      PROXY_PORT_HTTP: ${PROXY_PORT_HTTP}
+      PROXY_PORT_HTTPS: ${PROXY_PORT_HTTPS}
+      WEB_HOSTNAME: ${WEB_HOSTNAME}
+      WEB_PORT: ${WEB_PORT_HTTP}
+    ports:
+      - "${LOCAL_PORT_HTTP}:${PROXY_PORT_HTTP}"
+      - "${LOCAL_PORT_HTTPS}:${PROXY_PORT_HTTPS}"
+    volumes:
+      - ./scripts:/app/scripts
+      - ${CERTS_PATH}:/etc/letsencrypt:ro
+    networks:
+      - test_network
+
   web:
+    depends_on:
+      - db
     image: "horsecatdog/bedrock:latest"
+    container_name: sage-web-ctr
     build: !reset null
     entrypoint:
-        ["/bin/sh", "/app/scripts/web/test_entrypoint.sh"]
+        ["/bin/sh", "/app/scripts/web/dev_entrypoint.sh"]
     environment:
+      BEDROCK_ROOT: "/www/srv"
       DEV_GROUP_ID: ${DEV_GROUP_ID}
-      DEV_USER_ID: ${DEV_USER_ID}
+      WORDPRESS_DB_HOST: "db:3306"
+      WORDPRESS_DB: wordpress_test
+      WORDPRESS_DB_USER: test_user
+      WORDPRESS_DB_PASSWORD: test
+      WEB_HOSTNAME: ${WEB_HOSTNAME}
+      WEB_PORT: ${WEB_PORT_HTTP}
+      WEB_PROTOCOL: ${WEB_PROTOCOL}
     volumes:
-      - ./projects:/www/srv
+      - ${PROJECTS_DIR}:/www/srv
       - ./scripts:/app/scripts
+    secrets:
+      - db_password_dev
+    networks:
+      - dev_network
+    expose:
+      - "5173"
+      - "${WEB_PORT_HTTP}"
 
   db:
+    container_name: sage-db-ctr
     environment:
-      MARIADB_DATABASE: ""
-      MARIADB_USER: ""
-      MARIADB_ROOT_PASSWORD: test
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password_dev
+      MARIADB_DATABASE: wordpress_test
+      MARIADB_USER: wordpress_test
+      MARIADB_PASSWORD: test
     volumes:
-      - mariadb_test_data:/var/lib/mysql
+      - mariadb_dev_data:/var/lib/mysql
+    expose:
+      - "3306"
+    networks:
+      - test_network
 
 volumes:
   mariadb_test_data:
+
+networks:
+  test_network:
+    driver: bridge

@@ -36,13 +36,15 @@ def deploy_bedrock_project(args):
         "composer install",
         user="www-data",
         workdir=f"{BEDROCK_ROOT}/{name}",
+        container=args.web_container
     )
     run_docker_cmds(
         f"python3 /app/scripts/web/gen_apache_config.py {name}",
         "a2ensite wordpress",
         "a2enmod rewrite",
         "a2dissite 000-default",
-        "service apache2 reload"
+        "service apache2 reload",
+        container=args.web_container
     )
 
 
@@ -65,6 +67,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument(
+        "--web_container",
+        "-w",
+        default=config.get("web_container"),
+        type=str,
+        help="The name of the project."
+    )
+
     subparsers = parser.add_subparsers(
         title="Commands", help="Subcommand help.", required=True
     )
@@ -82,7 +92,7 @@ if __name__ == "__main__":
         type=str,
         help="The name of the project."
     )
-    parser_deploy.add_argument(
+   parser_deploy.add_argument(
         "--chmod",
         "-c",
         action="store_true", 
