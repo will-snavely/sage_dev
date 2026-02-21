@@ -34,6 +34,10 @@ services:
       WORDPRESS_DB: ${WORDPRESS_DB}
       WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
       WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password_dev
+      WP_SITE_TITLE: ${WP_SITE_TITLE}
+      WP_ADMIN_USER: ${WP_ADMIN_USER}
+      WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL}
+      WP_ADMIN_PASSWORD_FILE: ${WP_ADMIN_PASSWORD_FILE}
       WEB_HOSTNAME: ${WEB_HOSTNAME}
       WEB_PORT: ${WEB_PORT_HTTP}
       WEB_PROTOCOL: ${WEB_PROTOCOL}
@@ -80,3 +84,5 @@ secrets:
     file: ${DB_WORDPRESS_PASSWORD_FILE}
   db_root_password_dev:
     file: ${DB_ROOT_PASSWORD_FILE}
+  wp_admin_password_dev:
+    file: ${WP_ADMIN_PASSWORD_FILE}
