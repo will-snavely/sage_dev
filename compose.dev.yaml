@@ -37,7 +37,7 @@ services:
       WP_SITE_TITLE: ${WP_SITE_TITLE}
       WP_ADMIN_USER: ${WP_ADMIN_USER}
       WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL}
-      WP_ADMIN_PASSWORD_FILE: ${WP_ADMIN_PASSWORD_FILE}
+      WP_ADMIN_PASSWORD_FILE: /run/secrets/wp_admin_password_dev
       WEB_HOSTNAME: ${WEB_HOSTNAME}
       WEB_PORT: ${WEB_PORT_HTTP}
       WEB_PROTOCOL: ${WEB_PROTOCOL}
@@ -49,6 +49,7 @@ services:
       - ./scripts:/app/scripts
     secrets:
       - db_password_dev
+      - wp_admin_password_dev
     networks:
       - dev_network
     expose:
