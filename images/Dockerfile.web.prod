@@ -1,0 +1,64 @@
+from horsecatdog/bedrock:latest
+
+COPY --chown=root:root $PROJECTS_DIR/projects/$PROJECT /www/srv/$PROJECT/
+COPY --chown=root:root ./scripts /app/scripts
+WORKDIR /www/srv/$PROJECT
+RUN composer update && composer install 
+
+WORKDIR /www/srv/$PROJECT/web/app/themes/$THEME
+RUN composer update && \
+    composer install && \
+    npm install && \
+    npm run build
+
+RUN chown -R www-data:www-data /www/srv/$PROJECT/web/app/uploads
+RUN chown -R www-data:www-data /www/srv/$PROJECT/web/app/cache
+RUN find /www/srv/$PROJECT -type d -exec chmod 755 {} \\;
+RUN find /www/srv/$PROJECT -type f -exec chmod 644 {} \\;
+
+ENTRYPOINT ["apache2ctl", "-D", "FOREGROUND"]
+
+# --- Stage 1: Build Assets ---
+FROM node:18-alpine AS theme-builder
+ARG PROJECT
+ARG THEME
+WORKDIR /build
+COPY build/projects/$PROJECT/web/app/themes/$THEME ./
+RUN npm install && npm run build
+
+# --- Stage 2: Final Production Image ---
+FROM horsecatdog/bedrock:latest
+
+ARG PROJECT
+ARG THEME
+
+ENV PROJECT=$PROJECT
+ENV THEME=$THEME
+ENV BEDROCK_ROOT=/www/srv
+ENV PROJECT_ROOT=/www/srv/$PROJECT
+ENV THEME_ROOT=/www/srv/$PROJECT/web/app/themes/$THEME
+
+# 1. Set working directory
+WORKDIR /www/srv/$PROJECT
+
+# 2. Copy project files (using --chown avoids the extra RUN layer)
+COPY --chown=root:root build/projects/$PROJECT ./
+
+# 3. Copy the COMPILED theme assets from the builder stage
+# This ignores the node_modules and source files you don't need
+COPY --from=theme-builder --chown=root:root /build/public ./web/app/themes/$THEME/public
+
+# 4. Install Composer dependencies (Production only)
+# Avoid 'update'; use --no-dev for smaller images
+RUN composer install --no-interaction --no-ansi --optimize-autoloader --no-dev
+
+# 5. Handle permissions (Targets only what's necessary)
+RUN mkdir -p web/app/uploads web/app/cache && \
+    chown -R www-data:www-data web/app/uploads web/app/cache
+
+# 6. Set Permissions efficiently
+# Instead of find/chmod on everything, trust the COPY --chown
+# and just fix the folders that need specific write access.
+RUN chmod -R 755 web/app/uploads web/app/cache
+
+ENTRYPOINT ["apache2ctl", "-D", "FOREGROUND"]

@@ -3,3 +3,4 @@ themes
 .secret*
 .bedrock.conf
 __pycache__
+build

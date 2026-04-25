@@ -22,7 +22,7 @@ def get_bedrock_config(
     db_password_file,
     web_protocol,
     web_hostname,
-    web_port,
+    wp_env,
     log_file,
 ):
     config = collections.OrderedDict()
@@ -32,7 +32,7 @@ def get_bedrock_config(
         config["DB_PASSWORD"] = f.read().strip()
     config["DB_HOST"] = db_host
 
-    config["WP_ENV"] = "development"
+    config["WP_ENV"] = wp_env
     config["WP_HOME"] = f"{web_protocol}://{web_hostname}"
     config["WP_SITEURL"] = "${WP_HOME}/wp"
     config["WP_DEBUG_LOG"] = log_file
@@ -64,7 +64,7 @@ if __name__ == "__main__":
             os.environ["WORDPRESS_DB_PASSWORD_FILE"],
             os.environ["WEB_PROTOCOL"],
             os.environ["WEB_HOSTNAME"],
-            os.environ["WEB_PORT"],
+            os.environ["WP_ENV"],
             f"{bedrock_root}/{args.name}/web/app/debug.log"
 
         )
