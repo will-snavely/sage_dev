@@ -3,12 +3,6 @@ services:
     depends_on:
       - db
     image: "${PROJECT}:latest"
-    build:
-      context: .
-      dockerfile: build/Dockerfile.web.prod
-      args:
-        PROJECT: ${PROJECT}
-        THEME: ${THEME}
     restart: always
     environment:
       BEDROCK_ROOT: "/www/srv"
