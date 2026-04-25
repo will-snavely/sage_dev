@@ -84,6 +84,9 @@ services:
 
 volumes:
   mariadb_prod_data:
+  certbot-etc:
+  certbot-var:
+  webroot:
 
 networks:
   prod_network:
