@@ -26,8 +26,6 @@ services:
       - wp_admin_password_prod
     networks:
       - prod_network
-    entrypoint:
-        ["/bin/sh", "/app/scripts/web/prod_entrypoint.sh"]
 
   db:
     image: "mariadb:latest"
