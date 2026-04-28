@@ -17,6 +17,7 @@ services:
       WEB_HOSTNAME: ${WEB_HOSTNAME}
       WEB_PORT: ${WEB_PORT_HTTP}
       WEB_PROTOCOL: ${WEB_PROTOCOL}
+      WP_ENV: ${WP_ENV}
       PROJECT: ${PROJECT}
       THEME: ${THEME}
     volumes:
