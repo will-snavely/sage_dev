@@ -48,7 +48,6 @@ services:
       - web
     image: nginx:stable-alpine
     environment:
-      USE_HTTPS: ${USE_HTTPS}
       PROXY_PORT_HTTP: ${PROXY_PORT_HTTP}
       PROXY_PORT_HTTPS: ${PROXY_PORT_HTTPS}
       WEB_HOSTNAME: ${WEB_HOSTNAME}
@@ -71,9 +70,9 @@ services:
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
       - webroot:/var/www/html
-    # Switching to 'command' allows for easy overrides
+    entrypoint: "/bin/sh"
     command: >
-      /bin/sh -c "trap exit TERM; 
+      -c "trap exit TERM; 
       while :; do 
         certbot renew; 
         sleep 12h & wait $${!}; 
