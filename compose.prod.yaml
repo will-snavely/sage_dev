@@ -17,6 +17,7 @@ services:
       WEB_HOSTNAME: ${WEB_HOSTNAME}
       WEB_PORT: ${WEB_PORT_HTTP}
       WEB_PROTOCOL: ${WEB_PROTOCOL}
+      WP_ENV: ${WP_ENV}
       PROJECT: ${PROJECT}
       THEME: ${THEME}
     volumes:
@@ -26,8 +27,6 @@ services:
       - wp_admin_password_prod
     networks:
       - prod_network
-    entrypoint:
-        ["/bin/sh", "/app/scripts/web/dev_entrypoint.sh"]
 
   db:
     image: "mariadb:latest"
@@ -50,7 +49,6 @@ services:
       - web
     image: nginx:stable-alpine
     environment:
-      USE_HTTPS: ${USE_HTTPS}
       PROXY_PORT_HTTP: ${PROXY_PORT_HTTP}
       PROXY_PORT_HTTPS: ${PROXY_PORT_HTTPS}
       WEB_HOSTNAME: ${WEB_HOSTNAME}
@@ -73,9 +71,9 @@ services:
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
       - webroot:/var/www/html
-    # Switching to 'command' allows for easy overrides
+    entrypoint: "/bin/sh"
     command: >
-      /bin/sh -c "trap exit TERM; 
+      -c "trap exit TERM; 
       while :; do 
         certbot renew; 
         sleep 12h & wait $${!}; 
