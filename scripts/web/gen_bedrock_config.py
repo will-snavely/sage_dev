@@ -15,27 +15,28 @@ auth_keys = [
 ]
 
 
-def get_bedrock_config(
-    db_host,
-    db_name,
-    db_user,
-    db_password_file,
-    web_protocol,
-    web_hostname,
-    wp_env,
-    log_file,
-):
+def get_bedrock_config(project_name):
     config = collections.OrderedDict()
-    config["DB_NAME"] = db_name
-    config["DB_USER"] = db_user
+    bedrock_root = os.environ.get("BEDROCK_ROOT")
+    db_password_file = os.environ.get("WORDPRESS_DB_PASSWORD_FILE")
+    web_protocol = os.environ.get("WEB_PROTOCOL", "http")
+    web_hostname = os.environ.get("WEB_HOSTNAME", "web")
+    wp_env = os.environ.get("WP_ENV", "development")
+    wp_debug = os.environ.get("WP_DEBUG", "true")
+    wp_debug_display = os.environ.get("WP_DEBUG_DISPLAY", "false") 
+
+    config["DB_NAME"] = os.environ.get("WORDPRESS_DB_HOST")
+    config["DB_USER"] = os.environ.get("WORDPRESS_DB")
     with open(db_password_file) as f:
         config["DB_PASSWORD"] = f.read().strip()
-    config["DB_HOST"] = db_host
+    config["DB_HOST"] = web_hostname
 
     config["WP_ENV"] = wp_env
-    config["WP_HOME"] = f"{web_protocol}://{web_hostname}"
+    config["WP_DEBUG"] = wp_debug
+    config["WP_DEBUG_DISPLAY"] = wp_debug_display
     config["WP_SITEURL"] = "${WP_HOME}/wp"
-    config["WP_DEBUG_LOG"] = log_file
+    config["WP_HOME"] = f"{web_protocol}://{web_hostname}"
+    config["WP_DEBUG_LOG"] = f"{bedrock_root}/{project_name}/web/app/debug.log"
 
     for key in auth_keys:
         config[key] = secrets.token_urlsafe(64)
@@ -48,6 +49,7 @@ if __name__ == "__main__":
     parser.add_argument("name", type=str, help="The bedrock project name.")
     args = parser.parse_args()
 
+    project_name = args.name
     bedrock_root = os.environ["BEDROCK_ROOT"]
     bedrock_env_file = f"{bedrock_root}/{args.name}/.env"
     extra_config_file = f"{bedrock_root}/{args.name}/.env.extra"
@@ -57,17 +59,12 @@ if __name__ == "__main__":
         with open(extra_config_file) as f:
             extra_config = f.read()
     with open(bedrock_env_file, "w") as f:
-        config = get_bedrock_config(
-            os.environ["WORDPRESS_DB_HOST"],
-            os.environ["WORDPRESS_DB"], 
-            os.environ["WORDPRESS_DB_USER"], 
-            os.environ["WORDPRESS_DB_PASSWORD_FILE"],
-            os.environ["WEB_PROTOCOL"],
-            os.environ["WEB_HOSTNAME"],
-            os.environ["WP_ENV"],
-            f"{bedrock_root}/{args.name}/web/app/debug.log"
-
-        )
+        config = get_bedrock_config(project_name)
         for k, v in config.items():
-            f.write(f'{k}="{v}"\n')
+            if str(v).lower() in ("true", "false"):
+                f.write(f'{k}={str(v).lower()}\n')
+            elif isinstance(v, (int, float)):
+                f.write(f'{k}={v}\n')
+            else:
+                f.write(f'{k}="{v}"\n')
         f.write(extra_config)
