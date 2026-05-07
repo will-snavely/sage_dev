@@ -18,6 +18,10 @@ auth_keys = [
 def get_bedrock_config(project_name):
     config = collections.OrderedDict()
     bedrock_root = os.environ.get("BEDROCK_ROOT")
+
+    db_host = os.environ.get("WORDPRESS_DB_HOST")
+    db_name = os.environ.get("WORDPRESS_DB")
+    db_user = os.environ.get("WORDPRESS_DB_USER")
     db_password_file = os.environ.get("WORDPRESS_DB_PASSWORD_FILE")
     web_protocol = os.environ.get("WEB_PROTOCOL", "http")
     web_hostname = os.environ.get("WEB_HOSTNAME", "web")
@@ -25,11 +29,11 @@ def get_bedrock_config(project_name):
     wp_debug = os.environ.get("WP_DEBUG", "true")
     wp_debug_display = os.environ.get("WP_DEBUG_DISPLAY", "false") 
 
-    config["DB_NAME"] = os.environ.get("WORDPRESS_DB_HOST")
-    config["DB_USER"] = os.environ.get("WORDPRESS_DB")
+    config["DB_NAME"] = db_name
+    config["DB_USER"] = db_user
     with open(db_password_file) as f:
         config["DB_PASSWORD"] = f.read().strip()
-    config["DB_HOST"] = web_hostname
+    config["DB_HOST"] = db_host
 
     config["WP_ENV"] = wp_env
     config["WP_DEBUG"] = wp_debug
