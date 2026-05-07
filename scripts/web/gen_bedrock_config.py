@@ -28,6 +28,7 @@ def get_bedrock_config(project_name):
     wp_env = os.environ.get("WP_ENV", "development")
     wp_debug = os.environ.get("WP_DEBUG", "true")
     wp_debug_display = os.environ.get("WP_DEBUG_DISPLAY", "false") 
+    wp_home = f"{web_protocol}://{web_hostname}"
 
     config["DB_NAME"] = db_name
     config["DB_USER"] = db_user
@@ -38,8 +39,8 @@ def get_bedrock_config(project_name):
     config["WP_ENV"] = wp_env
     config["WP_DEBUG"] = wp_debug
     config["WP_DEBUG_DISPLAY"] = wp_debug_display
-    config["WP_SITEURL"] = "${WP_HOME}/wp"
-    config["WP_HOME"] = f"{web_protocol}://{web_hostname}"
+    config["WP_HOME"] = wp_home
+    config["WP_SITEURL"] = f"{wp_home}/wp"
     config["WP_DEBUG_LOG"] = f"{bedrock_root}/{project_name}/web/app/debug.log"
 
     for key in auth_keys:
