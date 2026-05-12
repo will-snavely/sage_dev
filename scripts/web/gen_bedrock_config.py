@@ -25,7 +25,7 @@ def get_bedrock_config(project_name):
     db_password_file = os.environ.get("WORDPRESS_DB_PASSWORD_FILE")
     web_protocol = os.environ.get("WEB_PROTOCOL", "http")
     web_hostname = os.environ.get("WEB_HOSTNAME", "web")
-    wp_env = os.environ.get("WP_ENV", "development")
+    wp_env = os.environ.get("WP_ENVIRON", "development")
     wp_debug = os.environ.get("WP_DEBUG", "true")
     wp_debug_display = os.environ.get("WP_DEBUG_DISPLAY", "false") 
     wp_home = f"{web_protocol}://{web_hostname}"

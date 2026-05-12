@@ -40,7 +40,7 @@ services:
       WP_ADMIN_USER: ${WP_ADMIN_USER}
       WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL}
       WP_ADMIN_PASSWORD_FILE: /run/secrets/wp_admin_password_dev
-      WP_ENV: ${WP_ENV}
+      WP_ENVIRON: ${WP_ENV}
       WEB_HOSTNAME: ${WEB_HOSTNAME}
       WEB_PORT: ${WEB_PORT_HTTP}
       WEB_PROTOCOL: ${WEB_PROTOCOL}
