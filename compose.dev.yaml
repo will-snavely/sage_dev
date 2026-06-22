@@ -82,6 +82,8 @@ volumes:
 networks:
   dev_network:
     driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1400
 
 secrets:
   db_password_dev:
