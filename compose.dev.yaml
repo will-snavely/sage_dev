@@ -50,6 +50,7 @@ services:
     volumes:
       - ${PROJECTS_DIR}:/www/srv
       - ./scripts:/app/scripts
+      - composer_cache_dev:/var/www/.cache/composer
     secrets:
       - db_password_dev
       - wp_admin_password_dev
@@ -78,6 +79,7 @@ services:
 
 volumes:
   mariadb_dev_data:
+  composer_cache_dev:
 
 networks:
   dev_network:
