@@ -24,6 +24,7 @@ services:
       THEME: ${THEME}
     volumes:
       - ./scripts:/app/scripts
+      - wp_uploads_prod:/www/srv/${PROJECT}/web/app/uploads
     secrets:
       - db_password_prod
       - wp_admin_password_prod
@@ -83,6 +84,7 @@ services:
 
 volumes:
   mariadb_prod_data:
+  wp_uploads_prod:
   certbot-etc:
   certbot-var:
   webroot:
