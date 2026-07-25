@@ -67,6 +67,32 @@ services:
     networks:
       - prod_network
 
+  backup:
+    depends_on:
+      - db
+    image: databack/mysql-backup:latest
+    restart: always
+    environment:
+      DB_SERVER: db
+      DB_PORT: 3306
+      DB_USER: ${WORDPRESS_DB_USER}
+      DB_PASS_FILE: /run/secrets/db_password_prod
+      DB_NAMES: ${WORDPRESS_DB}
+      DB_DUMP_TARGET: ${BACKUP_S3_TARGET}
+      DB_DUMP_FREQ: 1440
+      DB_DUMP_BEGIN: 0300
+      DB_DUMP_KEEP: 14
+      AWS_ACCESS_KEY_ID_FILE: /run/secrets/backup_s3_key
+      AWS_SECRET_ACCESS_KEY_FILE: /run/secrets/backup_s3_secret
+      AWS_ENDPOINT_URL: ${BACKUP_S3_ENDPOINT}
+      AWS_DEFAULT_REGION: ${BACKUP_S3_REGION}
+    secrets:
+      - db_password_prod
+      - backup_s3_key
+      - backup_s3_secret
+    networks:
+      - prod_network
+
   certbot:
     image: certbot/certbot
     restart: always
@@ -100,3 +126,7 @@ secrets:
     file: ${DB_ROOT_PASSWORD_FILE}
   wp_admin_password_prod:
     file: ${WP_ADMIN_PASSWORD_FILE}
+  backup_s3_key:
+    file: ${BACKUP_S3_KEY_FILE}
+  backup_s3_secret:
+    file: ${BACKUP_S3_SECRET_FILE}
