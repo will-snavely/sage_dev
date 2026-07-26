@@ -1,3 +1,5 @@
+limit_req_zone $binary_remote_addr zone=login_zone:10m rate=10r/m;
+
 server {
     listen PROXY_PORT_HTTP;
     server_name WEB_HOSTNAME www.WEB_HOSTNAME;
@@ -17,6 +19,30 @@ server {
 
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_prefer_server_ciphers on;
+
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    location ~* \.log$ {
+        deny all;
+    }
+
+    location = /xmlrpc.php {
+        deny all;
+    }
+
+    location ~* /wp-login\.php$ {
+        limit_req zone=login_zone burst=5 nodelay;
+        proxy_pass http://web:WEB_PORT_HTTP;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_headers_hash_max_size 512;
+        proxy_headers_hash_bucket_size 128;
+    }
 
     location / {
         proxy_pass http://web:WEB_PORT_HTTP;

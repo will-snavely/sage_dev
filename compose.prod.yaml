@@ -2,7 +2,7 @@ services:
   web:
     depends_on:
       - db
-    image: "horsecatdog/${PROJECT}:latest"
+    image: "horsecatdog/${PROJECT}:${WEB_IMAGE_TAG:-latest}"
     restart: always
     environment:
       BEDROCK_ROOT: "/www/srv"
@@ -29,7 +29,8 @@ services:
       - db_password_prod
       - wp_admin_password_prod
     networks:
-      - prod_network
+      - frontend_network
+      - backend_network
 
   db:
     image: "mariadb:latest"
@@ -45,7 +46,7 @@ services:
       - db_password_prod
       - db_root_password_prod
     networks:
-      - prod_network
+      - backend_network
 
   proxy:
     depends_on:
@@ -65,7 +66,7 @@ services:
       - certbot-var:/var/lib/letsencrypt:ro
       - webroot:/var/www/html
     networks:
-      - prod_network
+      - frontend_network
 
   backup:
     depends_on:
@@ -91,7 +92,7 @@ services:
       - backup_s3_key
       - backup_s3_secret
     networks:
-      - prod_network
+      - backend_network
 
   certbot:
     image: certbot/certbot
@@ -116,7 +117,9 @@ volumes:
   webroot:
 
 networks:
-  prod_network:
+  frontend_network:
+    driver: bridge
+  backend_network:
     driver: bridge
 
 secrets:
