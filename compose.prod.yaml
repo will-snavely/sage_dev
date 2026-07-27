@@ -22,12 +22,20 @@ services:
       WP_ENVIRON: ${WP_ENV}
       PROJECT: ${PROJECT}
       THEME: ${THEME}
+      WORDPRESS_SMTP_HOST: ${WORDPRESS_SMTP_HOST}
+      WORDPRESS_SMTP_PORT: ${WORDPRESS_SMTP_PORT}
+      WORDPRESS_SMTP_ENCRYPTION: ${WORDPRESS_SMTP_ENCRYPTION}
+      WORDPRESS_SMTP_USER: ${WORDPRESS_SMTP_USER}
+      WORDPRESS_SMTP_PASS_FILE: /run/secrets/smtp_password_prod
+      WORDPRESS_SMTP_FROM_EMAIL: ${WORDPRESS_SMTP_FROM_EMAIL}
+      WORDPRESS_SMTP_FROM_NAME: ${WORDPRESS_SMTP_FROM_NAME}
     volumes:
       - ./scripts:/app/scripts
       - wp_uploads_prod:/www/srv/${PROJECT}/web/app/uploads
     secrets:
       - db_password_prod
       - wp_admin_password_prod
+      - smtp_password_prod
     networks:
       - frontend_network
       - backend_network
@@ -83,14 +91,43 @@ services:
       DB_DUMP_FREQ: 1440
       DB_DUMP_BEGIN: 0300
       DB_DUMP_KEEP: 14
-      AWS_ACCESS_KEY_ID_FILE: /run/secrets/backup_s3_key
-      AWS_SECRET_ACCESS_KEY_FILE: /run/secrets/backup_s3_secret
+      AWS_ACCESS_KEY_ID_FILE: /run/secrets/backup_s3_key_prod
+      AWS_SECRET_ACCESS_KEY_FILE: /run/secrets/backup_s3_secret_prod
       AWS_ENDPOINT_URL: ${BACKUP_S3_ENDPOINT}
       AWS_DEFAULT_REGION: ${BACKUP_S3_REGION}
     secrets:
       - db_password_prod
-      - backup_s3_key
-      - backup_s3_secret
+      - backup_s3_key_prod
+      - backup_s3_secret_prod
+    networks:
+      - backend_network
+
+  # wp_uploads_prod holds actual uploaded files (student photos, documents,
+  # etc.) - only the database was backed up before this, so anything in
+  # here was one docker volume mishap away from being unrecoverable.
+  # No Docker socket mount: that's only needed to pause/resume other
+  # containers for consistency mid-backup, which matters for a live
+  # database but not for a directory of already-written files - skipping it
+  # avoids handing this container host-level access for no real benefit.
+  uploads-backup:
+    image: offen/docker-volume-backup:v2.48.2
+    restart: always
+    environment:
+      BACKUP_CRON_EXPRESSION: "0 3 * * *"
+      BACKUP_FILENAME: "wp-uploads-%Y-%m-%dT%H-%M-%S.tar.gz"
+      BACKUP_RETENTION_DAYS: 14
+      AWS_S3_BUCKET_NAME: ${BACKUP_S3_BUCKET_NAME}
+      AWS_S3_PATH: uploads
+      AWS_ENDPOINT: ${BACKUP_S3_ENDPOINT}
+      AWS_ENDPOINT_PROTO: https
+      AWS_REGION: ${BACKUP_S3_REGION}
+      AWS_ACCESS_KEY_ID_FILE: /run/secrets/backup_s3_key_prod
+      AWS_SECRET_ACCESS_KEY_FILE: /run/secrets/backup_s3_secret_prod
+    volumes:
+      - wp_uploads_prod:/backup/wp-uploads:ro
+    secrets:
+      - backup_s3_key_prod
+      - backup_s3_secret_prod
     networks:
       - backend_network
 
@@ -129,7 +166,9 @@ secrets:
     file: ${DB_ROOT_PASSWORD_FILE}
   wp_admin_password_prod:
     file: ${WP_ADMIN_PASSWORD_FILE}
-  backup_s3_key:
+  backup_s3_key_prod:
     file: ${BACKUP_S3_KEY_FILE}
-  backup_s3_secret:
+  backup_s3_secret_prod:
     file: ${BACKUP_S3_SECRET_FILE}
+  smtp_password_prod:
+    file: ${SMTP_PASSWORD_FILE}

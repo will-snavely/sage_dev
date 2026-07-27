@@ -23,7 +23,7 @@ services:
   web:
     depends_on:
       - db
-    image: "horsecatdog/bedrock:latest"
+    image: "horsecatdog/bedrock-dev:latest"
     build: !reset null
     entrypoint:
         ["/bin/sh", "/app/scripts/web/dev_entrypoint.sh"]

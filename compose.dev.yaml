@@ -23,7 +23,8 @@ services:
   web:
     depends_on:
       - db
-    image: "horsecatdog/bedrock:latest"
+      - mailpit
+    image: "horsecatdog/bedrock-dev:latest"
     build: !reset null
     entrypoint:
         ["/bin/sh", "/app/scripts/web/dev_entrypoint.sh"]
@@ -47,6 +48,10 @@ services:
       PROJECTS_DIR: ${PROJECTS_DIR}
       PROJECT: ${PROJECT}
       THEME: ${THEME}
+      WORDPRESS_SMTP_HOST: ${WORDPRESS_SMTP_HOST}
+      WORDPRESS_SMTP_PORT: ${WORDPRESS_SMTP_PORT}
+      WORDPRESS_SMTP_ENCRYPTION: ${WORDPRESS_SMTP_ENCRYPTION}
+      DEV_SKIP_REGISTRATION_LOGOUT: ${DEV_SKIP_REGISTRATION_LOGOUT}
     volumes:
       - ${PROJECTS_DIR}:/www/srv
       - ./scripts:/app/scripts
@@ -74,6 +79,21 @@ services:
       - db_root_password_dev
     expose:
       - "3306"
+    networks:
+      - dev_network
+
+  # Catches all outgoing mail instead of actually delivering it - view what
+  # WordPress sends (registration OTPs, password resets, etc.) at
+  # http://localhost:${MAILPIT_WEB_PORT}. Accepts SMTP with no auth/TLS, so
+  # WPMS_SMTP_AUTH is made conditional in application.php specifically so
+  # dev (no SMTP_USER set) doesn't force an auth attempt this doesn't support.
+  mailpit:
+    image: axllent/mailpit:v1.30.5
+    ports:
+      - "${MAILPIT_WEB_PORT}:8025"
+    expose:
+      - "1025"
+      - ${MAILPIT_WEB_PORT}
     networks:
       - dev_network
 
