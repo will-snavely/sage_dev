@@ -3,5 +3,6 @@ themes
 .secret*
 .bedrock.conf
 nginx/prod.conf
+config/
 __pycache__
 build

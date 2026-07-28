@@ -4,6 +4,11 @@ services:
       - db
     image: "horsecatdog/${PROJECT}:${WEB_IMAGE_TAG:-latest}"
     restart: always
+    # Needed so the entrypoint can a2ensite/a2enmod and edit ports.conf on
+    # every start; it drops to www-data itself before exec'ing apache2ctl.
+    user: root
+    entrypoint:
+        ["/bin/sh", "/app/scripts/web/prod_entrypoint.sh"]
     environment:
       BEDROCK_ROOT: "/www/srv"
       WORDPRESS_DB_HOST: "db:3306"
@@ -32,6 +37,12 @@ services:
     volumes:
       - ./scripts:/app/scripts
       - wp_uploads_prod:/www/srv/${PROJECT}/web/app/uploads
+      # Generated once by `task configure` (see gen_bedrock_env.py /
+      # gen_apache_conf.py) and persisted on the host, so a container
+      # restart or recreate doesn't lose them and doesn't need config
+      # regenerated inside the container.
+      - ./config/bedrock.env:/www/srv/${PROJECT}/.env:ro
+      - ./config/apache-wordpress.conf:/etc/apache2/sites-available/wordpress.conf:ro
     secrets:
       - db_password_prod
       - wp_admin_password_prod
