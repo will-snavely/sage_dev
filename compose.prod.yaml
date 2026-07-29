@@ -87,6 +87,29 @@ services:
     networks:
       - frontend_network
 
+  # databack/mysql-backup underwent a breaking rewrite at some point while
+  # pinned to :latest (a live example of exactly the risk unpinned tags
+  # carry) - it's now a subcommand CLI (dump/prune/restore), not a bare
+  # env-var-driven daemon, and needs an explicit `dump` command. Verified
+  # against the actual running image, not just docs, since several of its
+  # own doc sources turned out stale/inconsistent with real behavior:
+  #   - DB_SERVER/DB_PORT/DB_USER/DB_PASS_FILE: still correct, confirmed
+  #     via viper's "db"-prefixed env binding in cmd/root.go and an actual
+  #     successful DB connection in testing.
+  #   - DB_NAMES doesn't exist any more - renamed to DB_DUMP_INCLUDE.
+  #   - DB_DUMP_FREQ -> DB_DUMP_FREQUENCY, DB_DUMP_KEEP -> DB_DUMP_RETENTION
+  #     (also a format change: retention is now "14d"/"2w" style, not a
+  #     bare number), confirmed via viper's "db_dump"-prefixed binding in
+  #     cmd/dump.go and DB_DUMP_TARGET working correctly in testing.
+  #   - AWS_* / AWS_*_FILE env vars (both bare and DB_-prefixed) do NOT
+  #     work despite the tool's own --help text explicitly claiming
+  #     AWS_ACCESS_KEY_ID etc. are supported - confirmed empirically: set
+  #     every naming variant, got "static credentials are empty" every
+  #     time. Only the --aws-* CLI flags actually work, confirmed by the
+  #     same test succeeding once passed as flags instead. Secrets are
+  #     read from the mounted files at container start (command below),
+  #     not baked into this file, so it still keeps values out of both
+  #     the compose YAML and `docker inspect`'s environment listing.
   backup:
     depends_on:
       - db
@@ -97,15 +120,18 @@ services:
       DB_PORT: 3306
       DB_USER: ${WORDPRESS_DB_USER}
       DB_PASS_FILE: /run/secrets/db_password_prod
-      DB_NAMES: ${WORDPRESS_DB}
+      DB_DUMP_INCLUDE: ${WORDPRESS_DB}
       DB_DUMP_TARGET: ${BACKUP_S3_TARGET}
-      DB_DUMP_FREQ: 1440
-      DB_DUMP_BEGIN: 0300
-      DB_DUMP_KEEP: 14
-      AWS_ACCESS_KEY_ID_FILE: /run/secrets/backup_s3_key_prod
-      AWS_SECRET_ACCESS_KEY_FILE: /run/secrets/backup_s3_secret_prod
-      AWS_ENDPOINT_URL: ${BACKUP_S3_ENDPOINT}
-      AWS_DEFAULT_REGION: ${BACKUP_S3_REGION}
+      DB_DUMP_FREQUENCY: 1440
+      DB_DUMP_BEGIN: "0300"
+      DB_DUMP_RETENTION: 14d
+    entrypoint: "/bin/sh"
+    command: >
+      -c "/mysql-backup dump
+      --aws-access-key-id=$(cat /run/secrets/backup_s3_key_prod)
+      --aws-secret-access-key=$(cat /run/secrets/backup_s3_secret_prod)
+      --aws-region=${BACKUP_S3_REGION}
+      --aws-endpoint-url=https://${BACKUP_S3_ENDPOINT}"
     secrets:
       - db_password_prod
       - backup_s3_key_prod
