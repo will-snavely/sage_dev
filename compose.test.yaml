@@ -6,11 +6,22 @@ services:
     entrypoint:
         ["/bin/sh", "/app/scripts/proxy/dev_entrypoint.sh"]
     environment:
-      USE_HTTPS: false
+      USE_HTTPS: ${USE_HTTPS}
       PROXY_PORT_HTTP: ${PROXY_PORT_HTTP}
       PROXY_PORT_HTTPS: ${PROXY_PORT_HTTPS}
       WEB_HOSTNAME: ${WEB_HOSTNAME}
       WEB_PORT: ${WEB_PORT_HTTP}
+    # Distinct host ports from the dev stack (LOCAL_PORT_HTTP=8180 etc. in
+    # .env.test.template) so both stacks can run at once. Binding a second
+    # loopback address instead (127.0.0.2, same port numbers as dev) was
+    # tried first and rejected: the dev stack's own ports (compose.dev.yaml)
+    # publish on 0.0.0.0, and Docker Desktop's WSL2 backend does not let a
+    # specific-address bind coexist with an existing 0.0.0.0 bind on the
+    # same port - confirmed by an actual "port already allocated" failure
+    # against 0.0.0.0 despite `docker compose config` correctly resolving
+    # host_ip: 127.0.0.2. Non-default ports mean WP_HOME needs the port
+    # appended explicitly - see WEB_PORT_PUBLIC below and
+    # gen_bedrock_config.py.
     ports:
       - "${LOCAL_PORT_HTTP}:${PROXY_PORT_HTTP}"
       - "${LOCAL_PORT_HTTPS}:${PROXY_PORT_HTTPS}"
@@ -23,47 +34,92 @@ services:
   web:
     depends_on:
       - db
+      - mailpit
     image: "horsecatdog/bedrock-dev:latest"
-    build: !reset null
     entrypoint:
         ["/bin/sh", "/app/scripts/web/dev_entrypoint.sh"]
     environment:
       BEDROCK_ROOT: "/www/srv"
       DEV_GROUP_ID: ${DEV_GROUP_ID}
       WORDPRESS_DB_HOST: "db:3306"
-      WORDPRESS_DB: wordpress_test
-      WORDPRESS_DB_USER: test_user
-      WORDPRESS_DB_PASSWORD: test
+      WORDPRESS_DB: ${WORDPRESS_DB}
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
+      WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password_test
+      WP_DEBUG: ${WP_DEBUG}
+      WP_DEBUG_DISPLAY: ${WP_DEBUG_DISPLAY}
+      WP_SITE_TITLE: ${WP_SITE_TITLE}
+      WP_ADMIN_USER: ${WP_ADMIN_USER}
+      WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL}
+      WP_ADMIN_PASSWORD_FILE: /run/secrets/wp_admin_password_test
+      WP_ENVIRON: ${WP_ENV}
       WEB_HOSTNAME: ${WEB_HOSTNAME}
       WEB_PORT: ${WEB_PORT_HTTP}
+      WEB_PORT_PUBLIC: ${LOCAL_PORT_HTTP}
       WEB_PROTOCOL: ${WEB_PROTOCOL}
+      PROJECTS_DIR: ${PROJECTS_DIR}
+      PROJECT: ${PROJECT}
+      THEME: ${THEME}
+      WORDPRESS_SMTP_HOST: ${WORDPRESS_SMTP_HOST}
+      WORDPRESS_SMTP_PORT: ${WORDPRESS_SMTP_PORT}
+      WORDPRESS_SMTP_ENCRYPTION: ${WORDPRESS_SMTP_ENCRYPTION}
+      DEV_SKIP_REGISTRATION_LOGOUT: ${DEV_SKIP_REGISTRATION_LOGOUT}
     volumes:
       - ${PROJECTS_DIR}:/www/srv
       - ./scripts:/app/scripts
+      - composer_cache_test:/var/www/.cache/composer
     secrets:
-      - db_password_dev
+      - db_password_test
+      - wp_admin_password_test
     networks:
-      - dev_network
+      - test_network
     expose:
       - "5173"
       - "${WEB_PORT_HTTP}"
 
   db:
+    image: "mariadb:latest"
     environment:
-      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password_dev
-      MARIADB_DATABASE: wordpress_test
-      MARIADB_USER: wordpress_test
-      MARIADB_PASSWORD: test
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password_test
+      MARIADB_DATABASE: ${WORDPRESS_DB}
+      MARIADB_USER: ${WORDPRESS_DB_USER}
+      MARIADB_PASSWORD_FILE: /run/secrets/db_password_test
     volumes:
-      - mariadb_dev_data:/var/lib/mysql
+      - mariadb_test_data:/var/lib/mysql
+    secrets:
+      - db_password_test
+      - db_root_password_test
     expose:
       - "3306"
     networks:
       - test_network
 
+  # Catches all outgoing mail during E2E runs (registration OTPs, password
+  # resets, etc.) instead of actually delivering it - view at
+  # http://localhost:${MAILPIT_WEB_PORT}. Mirrors the dev stack's mailpit;
+  # kept here too since DEV_SKIP_REGISTRATION_LOGOUT only short-circuits one
+  # specific flow and other tests may still need to read mail.
+  mailpit:
+    image: axllent/mailpit:v1.30.5
+    ports:
+      - "${MAILPIT_WEB_PORT}:8025"
+    expose:
+      - "1025"
+      - ${MAILPIT_WEB_PORT}
+    networks:
+      - test_network
+
 volumes:
   mariadb_test_data:
+  composer_cache_test:
 
 networks:
   test_network:
     driver: bridge
+
+secrets:
+  db_password_test:
+    file: ${DB_WORDPRESS_PASSWORD_FILE}
+  db_root_password_test:
+    file: ${DB_ROOT_PASSWORD_FILE}
+  wp_admin_password_test:
+    file: ${WP_ADMIN_PASSWORD_FILE}

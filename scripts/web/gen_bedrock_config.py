@@ -25,10 +25,18 @@ def get_bedrock_config(project_name):
     db_password_file = os.environ.get("WORDPRESS_DB_PASSWORD_FILE")
     web_protocol = os.environ.get("WEB_PROTOCOL", "http")
     web_hostname = os.environ.get("WEB_HOSTNAME", "web")
+    # Optional - only needed when the site isn't published on the protocol's
+    # default port (e.g. an isolated test stack sharing the host with dev,
+    # where the default ports are already taken). Omitted entirely for the
+    # normal dev/prod case, which relies on the default-port assumption
+    # below.
+    web_port_public = os.environ.get("WEB_PORT_PUBLIC")
     wp_env = os.environ.get("WP_ENVIRON", "development")
     wp_debug = os.environ.get("WP_DEBUG", "true")
     wp_debug_display = os.environ.get("WP_DEBUG_DISPLAY", "false")
     wp_home = f"{web_protocol}://{web_hostname}"
+    if web_port_public:
+        wp_home += f":{web_port_public}"
 
     # Optional - application.php only turns on wp-mail-smtp's PHP-constant
     # config when SMTP_HOST is present, so these are only written to .env
