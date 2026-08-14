@@ -24,6 +24,7 @@ services:
     depends_on:
       - db
       - mailpit
+      - redis
     image: "horsecatdog/bedrock-dev:latest"
     build: !reset null
     entrypoint:
@@ -32,6 +33,8 @@ services:
       BEDROCK_ROOT: "/www/srv"
       DEV_GROUP_ID: ${DEV_GROUP_ID}
       WORDPRESS_DB_HOST: "db:3306"
+      WORDPRESS_REDIS_HOST: "redis"
+      WORDPRESS_REDIS_PORT: "6379"
       WORDPRESS_DB: ${WORDPRESS_DB}
       WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
       WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password_dev
@@ -79,6 +82,16 @@ services:
       - db_root_password_dev
     expose:
       - "3306"
+    networks:
+      - dev_network
+
+  # Same image/config as prod's redis service - see compose.prod.yaml for
+  # rationale (no volume, no exposed port, allkeys-lru cap).
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+    expose:
+      - "6379"
     networks:
       - dev_network
 

@@ -20,6 +20,8 @@ def get_bedrock_config(project_name):
     bedrock_root = os.environ.get("BEDROCK_ROOT")
 
     db_host = os.environ.get("WORDPRESS_DB_HOST")
+    redis_host = os.environ.get("WORDPRESS_REDIS_HOST")
+    redis_port = os.environ.get("WORDPRESS_REDIS_PORT")
     db_name = os.environ.get("WORDPRESS_DB")
     db_user = os.environ.get("WORDPRESS_DB_USER")
     db_password_file = os.environ.get("WORDPRESS_DB_PASSWORD_FILE")
@@ -66,6 +68,15 @@ def get_bedrock_config(project_name):
     with open(db_password_file) as f:
         config["DB_PASSWORD"] = f.read().strip()
     config["DB_HOST"] = db_host
+
+    # Optional, same reasoning as SMTP below - only written when the compose
+    # environment actually provides a redis host (it does for dev/prod, but
+    # keeps this generator from breaking for any other caller that doesn't
+    # run a redis container).
+    if redis_host:
+        config["REDIS_HOST"] = redis_host
+        if redis_port:
+            config["REDIS_PORT"] = redis_port
 
     config["WP_ENV"] = wp_env
     config["WP_DEBUG"] = wp_debug

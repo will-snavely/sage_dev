@@ -2,6 +2,7 @@ services:
   web:
     depends_on:
       - db
+      - redis
     image: "horsecatdog/${PROJECT}:${WEB_IMAGE_TAG:-latest}"
     restart: always
     # Needed so the entrypoint can a2ensite/a2enmod and edit ports.conf on
@@ -64,6 +65,18 @@ services:
     secrets:
       - db_password_prod
       - db_root_password_prod
+    networks:
+      - backend_network
+
+  # Persistent object cache backend for the redis-cache plugin (object-cache.php
+  # drop-in). No host port exposed and no volume - object cache data is fine
+  # to lose on a redeploy/restart, it just repopulates from MySQL on the next
+  # requests. allkeys-lru caps memory instead of growing unbounded/OOMing,
+  # trading (rare) early eviction of cold keys for a bounded footprint.
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
     networks:
       - backend_network
 
