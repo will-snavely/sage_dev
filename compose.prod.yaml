@@ -38,21 +38,6 @@ services:
     volumes:
       - ./scripts:/app/scripts
       - wp_uploads_prod:/www/srv/${PROJECT}/web/app/uploads
-      # Acorn's compiled Blade view cache (including the WooCommerce
-      # template "loader" files - see ThemeServiceProvider::fixMakeLoaderMacro()).
-      # Previously NOT persisted, wiped on every container recreate - normal
-      # for a stateless container, but it meant every single deploy forced
-      # a full re-compile of every Blade view from a cold, empty directory,
-      # with real production traffic hitting it immediately. That cold-cache
-      # stampede on a popular page (/my-account/) racing to compile the
-      # same view concurrently is the most likely trigger for the
-      # 2026-08-14 outage. Persisting it removes the recurring trigger
-      # entirely (deploys no longer start from empty) and is also just
-      # faster - Laravel/Acorn already recompiles automatically if a source
-      # template's mtime changes, so this doesn't risk serving a stale
-      # compiled view after a real theme update, it just stops discarding
-      # good compiled output for no reason.
-      - wp_acorn_cache_prod:/www/srv/${PROJECT}/web/app/cache/acorn
       # Generated once by `task configure` (see gen_bedrock_env.py /
       # gen_apache_conf.py) and persisted on the host, so a container
       # restart or recreate doesn't lose them and doesn't need config
@@ -214,7 +199,6 @@ services:
 volumes:
   mariadb_prod_data:
   wp_uploads_prod:
-  wp_acorn_cache_prod:
   certbot-etc:
   certbot-var:
   webroot:
