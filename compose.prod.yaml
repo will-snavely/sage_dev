@@ -48,6 +48,20 @@ services:
       - db_password_prod
       - wp_admin_password_prod
       - smtp_password_prod
+    # Memory caps below are sized for the CURRENT droplet: 4GB RAM (resized
+    # up from 2GB same day). The s-1vcpu-1gb hostname slug is stale from an
+    # even earlier size - don't trust it; confirm live specs directly if
+    # this is ever in doubt again, e.g. free -h. Budget: steady-state
+    # (web+db+redis+proxy+certbot, ~2.4GB) leaves ~800-900MB of headroom
+    # for the host/Docker daemon even with one backup job layered on top.
+    # Purpose isn't to squeeze every container tight - it's so ONE
+    # runaway/buggy container gets OOM-killed and restarted (restart:
+    # always) instead of exhausting host RAM and swap-thrashing every
+    # other service along with it.
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
     networks:
       - frontend_network
       - backend_network
@@ -65,6 +79,13 @@ services:
     secrets:
       - db_password_prod
       - db_root_password_prod
+    # MariaDB's default innodb_buffer_pool_size isn't tuned for this host -
+    # worth setting it explicitly if this limit starts getting hit under
+    # normal query load rather than just during backups.
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
     networks:
       - backend_network
 
@@ -77,6 +98,13 @@ services:
     image: redis:7-alpine
     restart: always
     command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+    # Limit sits above --maxmemory 128mb to leave room for Redis's own
+    # process overhead (connection buffers, etc.), not to allow it to grow
+    # past the LRU cap.
+    deploy:
+      resources:
+        limits:
+          memory: 192M
     networks:
       - backend_network
 
@@ -97,6 +125,10 @@ services:
       - certbot-etc:/etc/letsencrypt:ro
       - certbot-var:/var/lib/letsencrypt:ro
       - webroot:/var/www/html
+    deploy:
+      resources:
+        limits:
+          memory: 128M
     networks:
       - frontend_network
 
@@ -149,6 +181,15 @@ services:
       - db_password_prod
       - backup_s3_key_prod
       - backup_s3_secret_prod
+    # Runs daily at DB_DUMP_BEGIN 0300; uploads-backup below is now offset
+    # to 0330 (see its BACKUP_CRON_EXPRESSION) so the two jobs don't
+    # compete for disk/CPU/network at the same instant - that overlap alone
+    # is a plausible standalone explanation for the thrashing that prompted
+    # this whole pass.
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     networks:
       - backend_network
 
@@ -163,7 +204,9 @@ services:
     image: offen/docker-volume-backup:v2.48.2
     restart: always
     environment:
-      BACKUP_CRON_EXPRESSION: "0 3 * * *"
+      # Offset 30min after the DB backup's 0300 start (see backup service
+      # above) so the two jobs don't hit disk/CPU/network simultaneously.
+      BACKUP_CRON_EXPRESSION: "30 3 * * *"
       BACKUP_FILENAME: "wp-uploads-%Y-%m-%dT%H-%M-%S.tar.gz"
       BACKUP_RETENTION_DAYS: 14
       AWS_S3_BUCKET_NAME: ${BACKUP_S3_BUCKET_NAME}
@@ -178,6 +221,10 @@ services:
     secrets:
       - backup_s3_key_prod
       - backup_s3_secret_prod
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     networks:
       - backend_network
 
@@ -188,6 +235,10 @@ services:
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
       - webroot:/var/www/html
+    deploy:
+      resources:
+        limits:
+          memory: 64M
     entrypoint: "/bin/sh"
     command: >
       -c "trap exit TERM; 
